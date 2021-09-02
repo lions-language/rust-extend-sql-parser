@@ -38,20 +38,28 @@ pub enum DataType {
 }
 
 impl fmt::Display for DataType {
-    fn fmt(&self, f: fmt::Formatter) -> fmt::Result {
+    // TODO: write with macro
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             DataType::Char(size) => {
+                format_type_with_optional_length(f, "CHAR", size)
             },
             _ => {
+                unimplemented!();
             }
         }
     }
 }
 
+#[inline]
 fn format_type_with_optional_length(
     f: &mut fmt::Formatter,
     sql_type: &'static str,
     len: &Option<u64>,
 ) -> fmt::Result {
     write!(f, "{}", sql_type)?;
+    if let Some(len) = len {
+        write!(f, "({})", len)?;
+    };
+    Ok(())
 }
