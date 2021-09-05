@@ -84,3 +84,13 @@ where
     }
 }
 
+fn display_comma_separated<T>(slice: &[T]) -> DisplaySeparated<'_, T>
+where
+    T: fmt::Display,
+{
+    DisplaySeparated{
+        slice: slice,
+        sep: ","
+    }
+}
+
