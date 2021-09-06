@@ -14,6 +14,30 @@ pub struct Ident {
     pub quote_style: Option<char>
 }
 
+impl Ident {
+    pub fn new<S>(value: S) -> Self
+    where
+        S: Into<String>,
+    {
+        Ident {
+            value: value.into(),
+            quote_style: None
+        }
+    }
+
+    pub fn with_quote<S>(quote: char, value: S) -> Self
+    where
+        S: Into<String>,
+    {
+        assert!(quote == '\'' || quote == '"' || quote == '`', quote == '[');
+        Ident {
+            value: value.into(),
+            quote_style: Some(quote)
+        }
+    }
+}
+
+//////////////////////////////////
 // possibly multi-part, i.e. db.schema.obj
 pub struct ObjectName(pub Vec<Ident>);
 
@@ -84,7 +108,7 @@ where
     }
 }
 
-fn display_comma_separated<T>(slice: &[T]) -> DisplaySeparated<'_, T>
+fn display_comma_separated<'a, T>(slice: &'a [T]) -> DisplaySeparated<'a, T>
 where
     T: fmt::Display,
 {
