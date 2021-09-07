@@ -37,6 +37,28 @@ impl Ident {
     }
 }
 
+impl From<&str> for Ident {
+    fn from(value: &str) -> Self {
+        Self {
+            value: value.to_string(),
+            quote_style: None
+        }
+    }
+}
+
+impl fmt::Display for Ident {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.quote_style {
+            Some(q) if q == '"' || q == '\'' || q == '`' {
+            },
+            Some(q) if q == '[' {
+            },
+            None => {
+            }
+        }
+    }
+}
+
 //////////////////////////////////
 // possibly multi-part, i.e. db.schema.obj
 pub struct ObjectName(pub Vec<Ident>);
