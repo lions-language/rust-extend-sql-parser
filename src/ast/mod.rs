@@ -29,7 +29,7 @@ impl Ident {
     where
         S: Into<String>,
     {
-        assert!(quote == '\'' || quote == '"' || quote == '`', quote == '[');
+        assert!(quote == '\'' || quote == '"' || quote == '`' || quote == '[');
         Ident {
             value: value.into(),
             quote_style: Some(quote)
@@ -49,11 +49,17 @@ impl From<&str> for Ident {
 impl fmt::Display for Ident {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.quote_style {
-            Some(q) if q == '"' || q == '\'' || q == '`' {
+            Some(q) if q == '"' || q == '\'' || q == '`' => {
+                write!(f, "{}{}{}", q, self.value, q)
             },
-            Some(q) if q == '[' {
+            Some(q) if q == '[' => {
+                write!(f, "[{}]", self.value)
             },
             None => {
+                f.write_str(&self.value)
+            },
+            _ => {
+                panic!("unexpected quote style");
             }
         }
     }
