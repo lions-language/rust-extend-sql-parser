@@ -69,6 +69,28 @@ impl fmt::Display for Ident {
 // possibly multi-part, i.e. db.schema.obj
 pub struct ObjectName(pub Vec<Ident>);
 
+impl fmt::Display for ObjectName {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", display_separated(&self.0, "."))
+    }
+}
+
+//////////////////////////////////
+pub enum Expr {
+    Identifier(Ident)
+}
+
+impl fmt::Display for Expr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Expr::Identifier(s) => {
+                write!(f, "{}", s)
+            },
+        }
+    }
+}
+
+//////////////////////////////////
 pub struct SqlOption {
     pub name: Ident,
     pub value: Value
