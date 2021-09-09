@@ -1,5 +1,6 @@
 mod data_type;
 mod ddl;
+mod operator;
 mod value;
 
 use std::fmt;
