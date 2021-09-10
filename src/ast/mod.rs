@@ -8,6 +8,7 @@ use std::fmt;
 use self::data_type::DataType;
 use self::ddl::ColumnDef;
 use self::value::Value;
+use self::operator::{UnaryOperator, BinaryOperator};
 
 pub struct Ident {
     pub value: String,
@@ -78,7 +79,16 @@ impl fmt::Display for ObjectName {
 
 //////////////////////////////////
 pub enum Expr {
-    Identifier(Ident)
+    Identifier(Ident),
+    BinaryOp {
+        op: BinaryOperator,
+        left: Box<Expr>,
+        right: Box<Expr>
+    },
+    UnaryOp {
+        op: UnaryOperator,
+        expr: Box<Expr>
+    },
 }
 
 impl fmt::Display for Expr {
@@ -87,6 +97,19 @@ impl fmt::Display for Expr {
             Expr::Identifier(s) => {
                 write!(f, "{}", s)
             },
+            Expr::BinaryOp {
+                op,
+                left,
+                right,
+            } => {
+                write!(f, "{} {} {}", op, left, right)
+            },
+            Expr::UnaryOp {
+                op,
+                expr,
+            } => {
+                write!(f, "{} {}", op, expr)
+            }
         }
     }
 }
