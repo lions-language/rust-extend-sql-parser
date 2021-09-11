@@ -44,6 +44,18 @@ impl fmt::Display for DataType {
             DataType::Char(size) => {
                 format_type_with_optional_length(f, "CHAR", size)
             },
+            DataType::Varchar(size) => {
+                format_type_with_optional_length(f, "Varchar", size)
+            },
+            DataType::Uuid => {
+                write!(f, "UUID")
+            },
+            DataType::Binary(size) => {
+                format_type_with_length(f, "Binary", size)
+            },
+            DataType::Varbinary(size) => {
+                format_type_with_length(f, "Varbinary", size)
+            },
             _ => {
                 unimplemented!();
             }
@@ -62,4 +74,13 @@ fn format_type_with_optional_length(
         write!(f, "({})", len)?;
     };
     Ok(())
+}
+
+#[inline]
+fn format_type_with_length(
+    f: &mut fmt::Formatter,
+    sql_type: &'static str,
+    len: &u64,
+) -> fmt::Result {
+    write!(f, "{}({})", sql_type, len)
 }
