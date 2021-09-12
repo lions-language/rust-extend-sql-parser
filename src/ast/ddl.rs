@@ -51,6 +51,22 @@ impl fmt::Display for ColumnDef {
 }
 
 /////////////////////////////
+fn display_constraint_name(name: &'_ Option<Ident>) -> impl fmt::Display + '_ {
+    struct ConstraintName<'a>(&'a Option<Ident>);
+    
+    impl<'a> fmt::Display for ConstraintName<'a> {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            if let Some(n) = self.0 {
+                write!(f, "CONSTRAINT {} ", n)?;
+            };
+            Ok(())
+        }
+    }
+
+    ConstraintName(name)
+}
+
+/////////////////////////////
 pub struct ColumnOptionDef {
     pub name: Option<Ident>,
     pub option: ColumnOption
