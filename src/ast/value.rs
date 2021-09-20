@@ -52,7 +52,30 @@ impl fmt::Display for Value {
                 write!(f, "INTERVAL '{}' SECOND ({}, {})", escape_single_quote_string(value), leading_precision
                        , fractional_seconds_precision)
             },
+            Interval {
+                value,
+                leading_field,
+                leading_precision,
+                last_field,
+                fractional_seconds_precision
+            } => {
+                write!(f, "INTERVAL '{}'", escape_single_quote_string(value))?;
+                if let Some(leading_field) = leading_field {
+                    write!(f, "{}", leading_field)?;
+                };
+                if let Some(leading_precision) = leading_precision {
+                    write!(f, "({})", leading_precision)?;
+                };
+                if let Some(last_field) = last_field {
+                    write!(f, "TO {}", last_field)?;
+                };
+                if let Some(fractional_seconds_precision) = fractional_seconds_precision {
+                    write!(f, "({})", fractional_seconds_precision)?;
+                };
+                Ok(())
+            },
             Null => {
+                write!(f, "NULL")
             }
         }
     }
@@ -80,3 +103,25 @@ impl fmt::Display for DateTimeField {
         })
     }
 }
+
+//////////////////////////////
+pub struct EscapeSingleQuoteString<'a>(&'a str);
+
+impl<'a> fmt::Display for EscapeSingleQuoteString<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for c in self.0.chars() {
+            if c == '\'' {
+                write!(f, "\'\'")?;
+            } else {
+                write!(f, "{}", c)?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+pub fn escape_single_quote_string(s: &str) -> EscapeSingleQuoteString<'_> {
+    EscapeSingleQuoteString(s)
+}
+
