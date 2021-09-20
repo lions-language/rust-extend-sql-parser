@@ -26,10 +26,33 @@ impl fmt::Display for Value {
             Number(v, l) => {
                 write!(f, "{}{long}", v, long = if *l { "L" } else { "" })
             },
-            StringQuotedString(v) => {
+            SingleQuotedString(v) => {
                 write!(f, "\"{}\"", v)
             },
             NationalStringLiteral(v) => {
+                write!(f, "N'{}'", v)
+            },
+            HexStringLiteral(v) => {
+                write!(f, "X'{}'", v)
+            },
+            DoubleQuotedString(v) => {
+                write!(f, "{}", v)
+            },
+            Boolean(v) => {
+                write!(f, "{}", v)
+            },
+            Interval {
+                value,
+                leading_field: Some(DateTimeField::Second),
+                leading_precision: Some(leading_precision),
+                last_field,
+                fractional_seconds_precision: Some(fractional_seconds_precision)
+            } => {
+                assert!(last_field.is_none());
+                write!(f, "INTERVAL '{}' SECOND ({}, {})", escape_single_quote_string(value), leading_precision
+                       , fractional_seconds_precision)
+            },
+            Null => {
             }
         }
     }
