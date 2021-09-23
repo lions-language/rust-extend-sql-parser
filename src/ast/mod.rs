@@ -2,6 +2,7 @@ mod data_type;
 mod ddl;
 mod operator;
 mod value;
+mod query;
 
 use std::fmt;
 
