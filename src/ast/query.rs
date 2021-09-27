@@ -1,4 +1,8 @@
+use crate::ast::*;
+
 pub struct Query {
+    pub with: Option<With>,
+    pub body: SetExpr,
 }
 
 //////////////////////////////
@@ -39,4 +43,47 @@ pub struct Select {
 
 //////////////////////////////
 pub struct LateralView {
+}
+
+//////////////////////////////
+pub struct With {
+    pub recursive: bool,
+    pub cte_tables: Vec<Cte>
+}
+
+impl fmt::Display for With {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f,
+               "WITH {}{}",
+               if self.recursive { "RECURSIVE" } else { "" },
+               display_comma_separated(&self.cte_tables)
+        )
+    }
+}
+
+//////////////////////////////
+pub struct Cte {
+    pub alias: TableAlias,
+    pub query: Query,
+    pub from: Option<Ident>
+}
+
+impl fmt::Display for Cte {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} AS ({})", self.alias, self.query)?;
+        if let Some(ref fr) = self.from {
+            write!(f, " FROM {}", fr)?;
+        };
+
+        Ok(())
+    }
+}
+
+//////////////////////////////
+pub struct TableAlias {
+    pub name: Ident,
+    pub columns: Vec<Ident>
+}
+
+impl fmt::Display for TableAlias {
 }
