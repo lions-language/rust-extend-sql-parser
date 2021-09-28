@@ -5,6 +5,17 @@ pub struct Query {
     pub body: SetExpr,
 }
 
+impl fmt::Display for Query {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if let Some(ref with) = self.with {
+            write!(f, "{} ", with)?;
+        }
+        write!(f, "{}", self.body)?;
+
+        Ok(())
+    }
+}
+
 //////////////////////////////
 pub enum SetExpr {
     Select(Box<Select>),
@@ -15,8 +26,32 @@ pub enum SetExpr {
         left: Box<SetExpr>,
         right: Box<SetExpr>,
     },
-    Values(Values),
+    Values(Value),
     Insert(Statement)
+}
+
+impl fmt::Display for SetExpr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use SetExpr::*;
+
+        match self {
+            Select(s) => write!(f, "{}", s)?,
+            Query(q) => write!(f, "{}", q)?,
+            Values(v) => write!(f, "{}", v)?,
+            Insert(v) => write!(f, "{}", v)?,
+            SetOperation {
+                op,
+                all,
+                left,
+                right,
+            } => {
+                let all_str = if *all { " ALL" } else { "" };
+                write!(f, "{} {}{} {}", left, op, all_str, right)?;
+            }
+        }
+
+        Ok(())
+    }
 }
 
 //////////////////////////////
@@ -86,4 +121,12 @@ pub struct TableAlias {
 }
 
 impl fmt::Display for TableAlias {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.name)?;
+        if !self.columns.is_empty() {
+            write!(f, " ({})", display_comma_separated(&self.columns))?;
+        }
+
+        Ok(())
+    }
 }

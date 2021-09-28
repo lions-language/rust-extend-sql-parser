@@ -8,7 +8,7 @@ use std::fmt;
 
 use self::data_type::DataType;
 use self::ddl::ColumnDef;
-use self::value::Value;
+pub(crate) use self::value::Value;
 use self::operator::{UnaryOperator, BinaryOperator};
 
 pub struct Ident {
