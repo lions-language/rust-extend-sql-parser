@@ -62,6 +62,58 @@ pub enum SetOperator {
 }
 
 //////////////////////////////
+pub enum Top {
+    pub with_ties: bool,
+    pub percent: bool,
+    pub quantity: Option<Expr>
+}
+
+impl fmt::Display for Top {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let extension = if self.with_ties { " WITH TIES" } else { "" };
+        if let Some(ref quantity) = self.quantity {
+            let percent = if self.percent { " PERCENT" } else { "" };
+            write!(f, "TOP ({}){}{}", quantity, percent, extension)?;
+        } else {
+            write!(f, "TOP{}", extension)?;
+        }
+
+        Ok(())
+    }
+}
+
+//////////////////////////////
+pub struct SelectItem {
+    UnnamedExpr(Expr),
+    ExprWithAlias{
+        expr: Expr,
+        alias: Ident,
+    },
+    QualifiedWildcard(ObjectName),
+    Wildcard,
+}
+
+impl fmt::Display for SelectItem {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use SelectItem::*;
+
+        match self {
+            UnnamedExpr(e) => write!(f, "{}", e)?,
+            ExprWithAlias{
+                expr,
+                alias,
+            } => {
+                write!(f, "{} AS {}", expr, alias)?;
+            },
+            QualifiedWildcard(prefix) => write!(f, "{}.*", prefix)?,
+            Wildcard => write!(f, "*")?,
+        }
+
+        Ok(())
+    }
+}
+
+//////////////////////////////
 pub struct Select {
     pub distinct: bool,
     pub top: Option<Top>,
