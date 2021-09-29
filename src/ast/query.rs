@@ -130,6 +130,29 @@ pub struct Select {
 
 //////////////////////////////
 pub struct LateralView {
+    pub laterval_view: Expr,
+    pub laterval_view_name: ObjectName,
+    pub laterval_col_alias: Vec<Ident>,
+    pub outer: bool
+}
+
+impl fmt::Display for LateralView {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            " LATERAL VIEW{outer} {} {}",
+            self.laterval_view,
+            self.laterval_view_name,
+            // write! macro lexical, match LATERAL VIEW{outer} {} {} => outer
+            outer = if self.outer { " OUTER" } else { "" })?;
+        if !self.lateral_col_alias.is_empty() {
+            write!(f,
+                   " AS {}",
+                   display_comma_separated(&self.laterval_col_alias))?;
+        }
+
+        Ok(())
+    }
 }
 
 //////////////////////////////
