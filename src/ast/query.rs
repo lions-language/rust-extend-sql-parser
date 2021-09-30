@@ -217,6 +217,68 @@ impl fmt::Display for TableAlias {
 }
 
 //////////////////////////////
+pub struct TableFactor {
+    Table {
+        name: ObjectName,
+        alias: Option<TableAlias>,
+        args: Vec<FunctionArg>,
+        with_hints: Vec<Expr>,
+    },
+    Derived {
+        laterval: bool,
+        subquery: Box<Query>,
+        alias: Option<TableAlias>,
+    },
+    TableFunction {
+        expr: Expr,
+        alias: Option<TableAlias>,
+    },
+    NestedJoin(Box<TableWithJoins>)
+}
+
+impl fmt::Display for TableFactor {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use TableFactor::*;
+
+        match self {
+            Table {
+                name,
+                alias,
+                args,
+                with_hints,
+            } => {
+                write!(f, "{}", name)?;
+                if !args.is_empty() {
+                    write!(f, "({})", display_comma_separated(args))?;
+                }
+                if let Some(alias) = alias {
+                    write!(f, " AS {}", alias)?;
+                }
+                if !with_hints.is_empty() {
+                    write!(f, " WITH ({})", display_comma_separated(with_hints))?;
+                }
+            },
+            Derived {
+                laterval,
+                subquery,
+                alias,
+            } => {
+            },
+            TableFunction {
+                expr,
+                alias,
+            } => {
+            },
+            NestedJoin(table_reference) => {
+                write!(f, "({})", table_reference)?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+//////////////////////////////
 pub struct TableWithJoins {
     pub relation: TableFactor,
     pub joins: Vec<Join>
