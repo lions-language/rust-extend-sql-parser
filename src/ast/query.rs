@@ -61,8 +61,18 @@ pub enum SetOperator {
     Intersect,
 }
 
+impl fmt::Display for SetOperator {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str(match self {
+            SetOperator::Union => "UNION",
+            SetOperator::Except => "EXCEPT",
+            SetOperator::Intersect => "INTERSECT",
+        })
+    }
+}
+
 //////////////////////////////
-pub enum Top {
+pub struct Top {
     pub with_ties: bool,
     pub percent: bool,
     pub quantity: Option<Expr>
@@ -83,7 +93,7 @@ impl fmt::Display for Top {
 }
 
 //////////////////////////////
-pub struct SelectItem {
+pub enum SelectItem {
     UnnamedExpr(Expr),
     ExprWithAlias{
         expr: Expr,
@@ -145,7 +155,7 @@ impl fmt::Display for LateralView {
             self.laterval_view_name,
             // write! macro lexical, match LATERAL VIEW{outer} {} {} => outer
             outer = if self.outer { " OUTER" } else { "" })?;
-        if !self.lateral_col_alias.is_empty() {
+        if !self.laterval_col_alias.is_empty() {
             write!(f,
                    " AS {}",
                    display_comma_separated(&self.laterval_col_alias))?;
@@ -200,6 +210,23 @@ impl fmt::Display for TableAlias {
         write!(f, "{}", self.name)?;
         if !self.columns.is_empty() {
             write!(f, " ({})", display_comma_separated(&self.columns))?;
+        }
+
+        Ok(())
+    }
+}
+
+//////////////////////////////
+pub struct TableWithJoins {
+    pub relation: TableFactor,
+    pub joins: Vec<Join>
+}
+
+impl TableWithJoins {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.relation)?;
+        for join in self.joins {
+            write!(f, "{}", join)?;
         }
 
         Ok(())
