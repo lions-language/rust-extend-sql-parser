@@ -217,6 +217,25 @@ impl fmt::Display for TableAlias {
 }
 
 //////////////////////////////
+pub enum JoinConstraint {
+    On(Expr),
+    Using(Vec<Ident>),
+    Natural,
+    None
+}
+
+//////////////////////////////
+pub enum JoinOperator {
+    Inner(JoinConstraint),
+    LeftOuter(JoinConstraint),
+    RightOuter(JoinConstraint),
+    FullOuter(JoinConstraint),
+    CrossJoin,
+    CrossApply,
+    OuterApply
+}
+
+//////////////////////////////
 pub struct Join {
     pub relation: TableFactor,
     pub join_operator: JoinOperator,
@@ -224,8 +243,14 @@ pub struct Join {
 
 impl fmt::Display for Join {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use JoinConstraint::*;
+
         // inner function
         fn prefix(constraint: &JoinConstraint) -> &'static str {
+            match constraint {
+                Natural => "NATURAL ",
+                _ => "",
+            }
         }
 
         fn suffix(constraint: &JoinConstraint) -> impl fmt::Display + '_ {
@@ -233,9 +258,9 @@ impl fmt::Display for Join {
             impl<'a> fmt::Display for Suffix<'a> {
                 fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                     match self.0 {
-                        JoinConstraint::On(expr) => write!(f, " ON {}", expr),
+                        JoinConstraint::On(expr) => write!(f, " ON {}", expr)?,
                         JoinConstraint::Using(attrs) => {
-                            write!(f, " USING({})", display_comma_separated(attrs))
+                            write!(f, " USING({})", display_comma_separated(attrs))?;
                         }
                     }
 
@@ -245,6 +270,47 @@ impl fmt::Display for Join {
 
             Suffix(constraint)
         }
+
+        use JoinOperator::*;
+        match &self.join_operator {
+            Inner(constraint) => {
+                write!(f,
+                       " {}JOIN {}{}",
+                       prefix(constraint),
+                       self.relation,
+                       suffix(constraint)
+                )?;
+            },
+            LeftOuter(constraint) => {
+                write!(f,
+                       " {}LEFT JOIN {}{}",
+                       prefix(constraint),
+                       self.relation,
+                       suffix(constraint)
+                )?;
+            },
+            RightOuter(constraint) => {
+                write!(f,
+                       " {}RIGHT JOIN {}{}",
+                       prefix(constraint),
+                       self.relation,
+                       suffix(constraint)
+                )?;
+            },
+            FullOuter(constraint) => {
+                write!(f,
+                       " {}FULL JOIN {}{}",
+                       prefix(constraint),
+                       self.relation,
+                       suffix(constraint)
+                )?;
+            },
+            CrossJoin => write!(f, " CROSS JOIN {}", self.relation)?,
+            CrossApply => write!(f, " CROSS APPLY {}", self.relation)?,
+            OuterApply => write!(f, " OUTER APPLY {}", self.relation)?
+        }
+
+        Ok(())
     }
 }
 

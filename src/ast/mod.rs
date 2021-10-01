@@ -116,6 +116,33 @@ impl fmt::Display for Expr {
 }
 
 //////////////////////////////////
+pub enum FunctionArg {
+    Named {
+        name: Ident,
+        arg: Expr,
+    },
+    Unnamed(Expr),
+}
+
+impl fmt::Display for FunctionArg {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use FunctionArg::*;
+        
+        match self {
+            Named {
+                name,
+                arg
+            } => {
+                write!(f, "{} => {}", name, arg)
+            },
+            Unnamed(unnamed_arg) => {
+                write!(f, "{}", unnamed_arg)
+            }
+        }
+    }
+}
+
+//////////////////////////////////
 pub struct SqlOption {
     pub name: Ident,
     pub value: Value
