@@ -217,7 +217,39 @@ impl fmt::Display for TableAlias {
 }
 
 //////////////////////////////
-pub struct TableFactor {
+pub struct Join {
+    pub relation: TableFactor,
+    pub join_operator: JoinOperator,
+}
+
+impl fmt::Display for Join {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // inner function
+        fn prefix(constraint: &JoinConstraint) -> &'static str {
+        }
+
+        fn suffix(constraint: &JoinConstraint) -> impl fmt::Display + '_ {
+            struct Suffix<'a>(&'a JoinConstraint);
+            impl<'a> fmt::Display for Suffix<'a> {
+                fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                    match self.0 {
+                        JoinConstraint::On(expr) => write!(f, " ON {}", expr),
+                        JoinConstraint::Using(attrs) => {
+                            write!(f, " USING({})", display_comma_separated(attrs))
+                        }
+                    }
+
+                    Ok(())
+                }
+            }
+
+            Suffix(constraint)
+        }
+    }
+}
+
+//////////////////////////////
+pub enum TableFactor {
     Table {
         name: ObjectName,
         alias: Option<TableAlias>,
@@ -263,11 +295,22 @@ impl fmt::Display for TableFactor {
                 subquery,
                 alias,
             } => {
+                if *laterval {
+                    write!(f, "LATERAL ")?;
+                }
+                write!(f, "({})", subquery)?;
+                if let Some(alias) = alias {
+                    write!(f, " AS {}", alias)?;
+                }
             },
             TableFunction {
                 expr,
                 alias,
             } => {
+                write!(f, "TABLE({})", expr)?;
+                if let Some(alias) = alias {
+                    write!(f, " AS {}", alias)?;
+                }
             },
             NestedJoin(table_reference) => {
                 write!(f, "({})", table_reference)?;
