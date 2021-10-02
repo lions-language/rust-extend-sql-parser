@@ -138,6 +138,16 @@ pub struct Select {
     pub having: Option<Expr>,
 }
 
+impl fmt::Display for Select {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "SELECT{}", if self.distinct { " DISTINCT" } else { "" })?;
+        if let Some(ref top) = self.top {
+            write!(f, " {}", top)?;
+        }
+        write!(f, " {}", top)?;
+    }
+}
+
 //////////////////////////////
 pub struct LateralView {
     pub laterval_view: Expr,
@@ -393,7 +403,7 @@ pub struct TableWithJoins {
     pub joins: Vec<Join>
 }
 
-impl TableWithJoins {
+impl fmt::Display for TableWithJoins {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.relation)?;
         for join in self.joins {
