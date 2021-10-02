@@ -144,7 +144,20 @@ impl fmt::Display for Select {
         if let Some(ref top) = self.top {
             write!(f, " {}", top)?;
         }
-        write!(f, " {}", top)?;
+        write!(f, " {}", display_comma_separated(&self.projection))?;
+        if !self.from.is_empty() {
+            write!(f, " FROM {}", display_comma_separated(&self.from))?;
+        }
+        if !self.lateral_views.is_empty() {
+            for lv in &self.lateral_views {
+                write!(f, "{}", lv)?;
+            }
+        }
+        if let Some(ref selection) = self.selection {
+            write!(f, " WHERE {}", selection)?;
+        }
+
+        Ok(())
     }
 }
 
@@ -270,11 +283,10 @@ impl fmt::Display for Join {
                     match self.0 {
                         JoinConstraint::On(expr) => write!(f, " ON {}", expr)?,
                         JoinConstraint::Using(attrs) => {
-                            write!(f, " USING({})", display_comma_separated(attrs))?;
-                        }
+                            write!(f, " USING({})", display_comma_separated(attrs))?
+                        },
+                        _ => Ok(())
                     }
-
-                    Ok(())
                 }
             }
 
@@ -406,7 +418,7 @@ pub struct TableWithJoins {
 impl fmt::Display for TableWithJoins {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.relation)?;
-        for join in self.joins {
+        for join in &self.joins {
             write!(f, "{}", join)?;
         }
 
