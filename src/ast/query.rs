@@ -156,6 +156,27 @@ impl fmt::Display for Select {
         if let Some(ref selection) = self.selection {
             write!(f, " WHERE {}", selection)?;
         }
+        if !self.group_by.is_empty() {
+            write!(f, " GROUP BY {}", display_comma_separated(&self.group_by))?;
+        }
+        if !self.cluster_by.is_empty() {
+            write!(f,
+                   "CLUSTER BY {}",
+                   display_comma_separated(&self.cluster_by)
+            )?;
+        }
+        if !self.distribute_by.is_empty() {
+            write!(f,
+                   " DISTRIBUTE BY {}",
+                   display_comma_separated(&self.distribute_by)
+            )?;
+        }
+        if !self.sort_by.is_empty() {
+            write!(f, " SORT BY {}", display_comma_separated(&self.sort_by))?;
+        }
+        if let Some(ref having) = self.having {
+            write!(f, " HAVING {}", having)?;
+        }
 
         Ok(())
     }
@@ -283,10 +304,14 @@ impl fmt::Display for Join {
                     match self.0 {
                         JoinConstraint::On(expr) => write!(f, " ON {}", expr)?,
                         JoinConstraint::Using(attrs) => {
-                            write!(f, " USING({})", display_comma_separated(attrs))?
+                            write!(f, " USING({})", display_comma_separated(attrs))?;
                         },
-                        _ => Ok(())
+                        _ => {
+                            return Ok(());
+                        }
                     }
+
+                    Ok(())
                 }
             }
 
