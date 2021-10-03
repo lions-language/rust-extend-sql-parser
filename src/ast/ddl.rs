@@ -1,6 +1,74 @@
 use super::{display_comma_separated, DataType, Ident, ObjectName, Expr};
 use std::fmt;
 
+/////////////////////////////
+pub enum AlterTableOperation {
+    AddConstraint(TableConstraint),
+    AddColumn {
+        column_def: ColumnDef
+    },
+    DropConstraint {
+        name: Ident
+    },
+    DropColumn {
+        column_name: Ident,
+        if_exists: bool,
+        caseade: bool
+    },
+    RenamePartitions {
+        old_partitions: Vec<Expr>,
+        new_partitions: Vec<Expr>
+    },
+    AddPartitions {
+        if_not_exists: bool,
+        new_partitions: Vec<Expr>,
+    },
+    DropPartitions {
+        partitions: Vec<Expr>,
+        if_exists: bool,
+    },
+    RenameColumn {
+        old_column_name: Ident,
+        new_column_name: Ident,
+    },
+    RenameTable {
+        table_name: ObjectName
+    }
+}
+
+impl fmt::Display for AlterTableOperation {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        use AlterTableOperation::*;
+
+        match self {
+            AddPartitions {
+                if_not_exists,
+                new_partitions
+            } => {
+            }
+        }
+    }
+}
+
+/////////////////////////////
+pub enum TableConstraint {
+    Unique {
+        name: Option<Ident>,
+        columns: Vec<Ident>,
+        is_primary: bool,
+    },
+    ForeignKey {
+        name: Option<Ident>,
+        columns: Vec<Ident>,
+        foreign_table: ObjectName,
+        referred_columns: Vec<Ident>,
+    },
+    Check {
+        name: Option<Ident>,
+        expr: Box<Expr>
+    }
+}
+
 // column option
 pub enum ColumnOption {
     // null
