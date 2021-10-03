@@ -17,6 +17,23 @@ impl fmt::Display for Query {
 }
 
 //////////////////////////////
+pub struct Values(pub Vec<Vec<Expr>>);
+
+impl fmt::Display for Values {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "VALUES ")?;
+        let mut delim = "";
+        for row in &self.0 {
+            write!(f, "{}", delim)?;
+            delim = ", ";
+            write!(f, "({})", display_comma_separated(row))?;
+        }
+
+        Ok(())
+    }
+}
+
+//////////////////////////////
 pub enum SetExpr {
     Select(Box<Select>),
     Query(Box<Query>),
@@ -26,7 +43,7 @@ pub enum SetExpr {
         left: Box<SetExpr>,
         right: Box<SetExpr>,
     },
-    Values(Value),
+    Values(Values),
     Insert(Statement)
 }
 
