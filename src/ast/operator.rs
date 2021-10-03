@@ -22,17 +22,53 @@ pub enum BinaryOperator {
     Minus,
     Multiply,
     Divide,
-    Modulus
+    Modulus,
+    StringConcat,
+    Gt,
+    Lt,
+    GtEq,
+    LtEq,
+    Spaceship,
+    Eq,
+    NotEq,
+    And,
+    Or,
+    Like,
+    NotLike,
+    ILike,
+    NotILike,
+    BitwiseOr,
+    BitwiseAnd,
+    BitwiseXor,
 }
 
 impl fmt::Display for BinaryOperator {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use BinaryOperator::*;
+
         f.write_str(match self {
-            BinaryOperator::Plus => "+",
-            BinaryOperator::Minus => "-",
-            BinaryOperator::Multiply => "*",
-            BinaryOperator::Divide => "/",
-            BinaryOperator::Modulus => "%",
+            Plus => "+",
+            Minus => "-",
+            Multiply => "*",
+            Divide => "/",
+            Modulus => "%",
+            StringConcat => "||",
+            Gt => ">",
+            Lt => "<",
+            GtEq => ">=",
+            LtEq => "<=",
+            Spaceship => "<=>",
+            Eq => "=",
+            NotEq => "<>",
+            And => "AND",
+            Or => "OR",
+            Like => "LIKE",
+            NotLike => "NOT LIKE",
+            ILike => "ILIKE",
+            NotILike => "NOT ILIKE",
+            BitwiseOr => "|",
+            BitwiseAnd => "&",
+            BitwiseXor => "^",
         })
     }
 }
