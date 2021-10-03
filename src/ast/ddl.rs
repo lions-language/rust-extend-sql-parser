@@ -45,6 +45,19 @@ impl fmt::Display for AlterTableOperation {
                 if_not_exists,
                 new_partitions
             } => {
+                write!(f,
+                       "ADD{ine} PARTITION ({})",
+                       display_comma_separated(new_partitions),
+                       ine = if *if_not_exists { " IF NOT EXISTS" } else { "" }
+                )?;
+            },
+            AddConstraint(c) => {
+                write!(f, "ADD {}", c)?;
+            },
+            AddColumn {
+                conlumn_def
+            } => {
+                write!(f, "ADD COLUMN {}", column_def.to_string())?;
             }
         }
     }
