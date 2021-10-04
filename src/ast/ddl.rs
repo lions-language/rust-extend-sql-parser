@@ -59,6 +59,15 @@ impl fmt::Display for AlterTableOperation {
             } => {
                 write!(f, "ADD COLUMN {}", column_def.to_string())?;
             },
+            DropPartitions {
+                partitions,
+                if_exists,
+            } => {
+                write!(f,
+                       "DROP{ie} PARTITION ({})",
+                       display_comma_separated(partitions),
+                       ie = if *if_exists { " IF EXISTS"} else { "" })?;
+            },
             DropConstraint {
                 name
             } => {
@@ -135,6 +144,12 @@ impl fmt::Display for TableConstraint {
                 columns,
                 is_primary,
             } => {
+                write!(f,
+                       "{}{} ({})",
+                       display_constraint_name(name),
+                       if *is_primary { "PRIMARY KEY" } else { "UNIQUE" },
+                       display_comma_separated(columns)
+                )?;
             },
             ForeignKey {
                 name,
@@ -142,13 +157,23 @@ impl fmt::Display for TableConstraint {
                 foreign_table,
                 referred_columns,
             } => {
+                write!(f,
+                       "{}FOREIGN KEY ({}) REFERENCES {}({})",
+                       display_constraint_name(name),
+                       display_comma_separated(columns),
+                       foreign_table,
+                       display_comma_separated(referred_columns)
+                )?;
             },
             Check {
                 name,
                 expr
             } => {
+                write!(f, "{}CHECK ({})", display_constraint_name(name), expr)?;
             }
         }
+
+        Ok(())
     }
 }
 
