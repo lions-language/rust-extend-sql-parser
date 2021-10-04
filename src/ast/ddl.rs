@@ -13,7 +13,7 @@ pub enum AlterTableOperation {
     DropColumn {
         column_name: Ident,
         if_exists: bool,
-        caseade: bool
+        cascade: bool
     },
     RenamePartitions {
         old_partitions: Vec<Expr>,
@@ -37,7 +37,7 @@ pub enum AlterTableOperation {
 }
 
 impl fmt::Display for AlterTableOperation {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use AlterTableOperation::*;
 
         match self {
@@ -55,11 +55,54 @@ impl fmt::Display for AlterTableOperation {
                 write!(f, "ADD {}", c)?;
             },
             AddColumn {
-                conlumn_def
+                column_def
             } => {
                 write!(f, "ADD COLUMN {}", column_def.to_string())?;
+            },
+            DropConstraint {
+                name
+            } => {
+                write!(f, "DROP CONSTRAINT {}", name)?;
+            },
+            DropColumn {
+                column_name,
+                if_exists,
+                cascade,
+            } => {
+                write!(f,
+                       "DROP COLUMN {}{}{}",
+                       if *if_exists { "IF EXISTS "} else { "" },
+                       column_name,
+                       if *cascade { " CASCADE" } else { "" }
+                )?;
+            },
+            RenamePartitions {
+                old_partitions,
+                new_partitions
+            } => {
+                write!(f,
+                       "PARTITION ({}) RENAME TO PARTITION ({})",
+                       display_comma_separated(old_partitions),
+                       display_comma_separated(new_partitions)
+                )?;
+            },
+            RenameColumn {
+                old_column_name,
+                new_column_name
+            } => {
+                write!(f,
+                       "RENAME COLUMN {} TO {}",
+                       old_column_name, new_column_name
+                )?;
+            },
+            RenameTable {
+                table_name
+            } => {
+                write!(f, "RENAME TO {}", table_name)?;
             }
         }
+
+        Ok(())
     }
 }
 
@@ -79,6 +122,33 @@ pub enum TableConstraint {
     Check {
         name: Option<Ident>,
         expr: Box<Expr>
+    }
+}
+
+impl fmt::Display for TableConstraint {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use TableConstraint::*;
+
+        match self {
+            Unique {
+                name,
+                columns,
+                is_primary,
+            } => {
+            },
+            ForeignKey {
+                name,
+                columns,
+                foreign_table,
+                referred_columns,
+            } => {
+            },
+            Check {
+                name,
+                expr
+            } => {
+            }
+        }
     }
 }
 
