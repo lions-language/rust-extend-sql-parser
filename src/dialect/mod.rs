@@ -3,6 +3,7 @@ use std::fmt::Debug;
 
 mod ansi;
 mod generic;
+mod keywords;
 
 /*
  * if obj.dialect.is::<SQLiteDialect>() ||
