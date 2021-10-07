@@ -2,6 +2,7 @@ use std::any::{Any, TypeId};
 use std::fmt::Debug;
 
 mod ansi;
+mod generic;
 
 /*
  * if obj.dialect.is::<SQLiteDialect>() ||
