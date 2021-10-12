@@ -4,6 +4,7 @@ use std::fmt::Debug;
 mod ansi;
 mod generic;
 mod keywords;
+mod sqlite;
 
 /*
  * if obj.dialect.is::<SQLiteDialect>() ||
