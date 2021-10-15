@@ -151,3 +151,57 @@ impl fmt::Display for Token {
     }
 }
 
+impl Token {
+    pub fn make_keyword(keyword: &str) -> Self {
+        Token::make_word(keyword, None)
+    }
+
+    pub fn make_word(word: &str, quote_style: Option<char>) -> Self {
+        let word_uppercase = word.to_uppercase();
+        Token::Word(Word {
+            value: word.to_string(),
+            quote_style,
+            keyword: if quote_style == None {
+                let keyword = ALL_KEYWORDS.binary_search(&word_uppercase.as_str());
+                keyword.map_or(Keyword::NoKeyword, |x| ALL_KEYWORDS_INDEX[x])
+            } else {
+                Keyword::NoKeyword
+            },
+        })
+    }
+}
+
+pub struct Word {
+    pub value: String,
+    pub quote_style: Option<char>,
+    pub keyword: Keyword
+}
+
+impl fmt::Display for Word {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.quote_style {
+            Some(s) if s == '"' || s == '{' || s == '`'  => {
+                write!(f, "{}{}{}", s, self.value, Word::matching_end_quote(s))
+            },
+            None => {
+                f.write_str(&self.value)
+            },
+            // if s != " && s != { && s != `
+            _ => panic!("Unexpected quote_style!"),
+        }
+    }
+}
+
+impl Word {
+    // " after "
+    // [ after ]
+    // ` after `
+    fn matching_end_quote(ch: char) -> char {
+        match ch {
+            '"' => '"', // ANSI and more dialects
+            '[' => ']', // MS SQL
+            '`' => '`', // MySQL
+            _ => panic!("unexpected quoting style!"),
+        }
+    }
+}

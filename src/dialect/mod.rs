@@ -3,7 +3,7 @@ use std::fmt::Debug;
 
 mod ansi;
 mod generic;
-mod keywords;
+pub(crate) mod keywords;
 mod sqlite;
 
 /*
