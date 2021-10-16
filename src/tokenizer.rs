@@ -229,3 +229,60 @@ impl fmt::Display for Whitespace {
         }
     }
 }
+
+pub struct TokenizerError {
+    pub message: String,
+    pub line: u64,
+    pub col: u64
+}
+
+pub struct Tokenizer<'a> {
+    dialect: &'a dyn Dialect,
+    pub query: String,
+    pub line: u64,
+    pub col: u64,
+}
+
+impl<'a> Tokenizer<'a> {
+    pub fn new(dialect: &'a dyn Dialect, query: &str) -> Self {
+        Self {
+            dialect: dialect,
+            query: query.to_string(),
+            line: 1,
+            col: 1,
+        }
+    }
+
+    fn consume_and_return(
+        &self,
+        chars: &mut Peekable<Chars<'_>>,
+        t: Token,
+    ) -> Result<Option<Token>, TokenizerError> {
+        chars.next();
+        Ok(Some(t))
+    }
+
+    pub fn tokenize(&mut self) -> Result<Vec<Token>, TokenizerError> {
+        unimplemented!();
+    }
+
+    fn next_token(&self, chars: &mut Peekable<Chars<'_>>) -> Result<Option<Token>, TokenizerError> {
+        use Whitespace::*;
+        match chars.peek() {
+            Some(&ch) => match ch {
+                ' ' => self.consume_and_return(chars, Token::Whitespace(Space)),
+                '\t' => self.consume_and_return(chars, Token::Whitespace(Tab)),
+                '\n' => self.consume_and_return(chars, Token::Whitespace(Newline)),
+                '\r' => {
+                    chars.next();
+                    unimplemented!();
+                },
+                _ => unimplemented!()
+            },
+            None => {
+                Ok(None)
+            }
+        }
+    }
+}
+
