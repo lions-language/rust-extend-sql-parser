@@ -205,3 +205,27 @@ impl Word {
         }
     }
 }
+
+pub enum Whitespace {
+    Space,
+    Newline,
+    Tab,
+    SingleLineComment { comment: String, prefix: String },
+    MultiLineComment(String),
+}
+
+impl fmt::Display for Whitespace {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use Whitespace::*;
+        match self {
+            Space => f.write_str(" "),
+            Newline => f.write_str("\n"),
+            Tab => f.write_str("\t"),
+            SingleLineComment {
+                prefix,
+                comment,
+            } => write!(f, "{}{}", prefix, comment),
+            MultiLineComment(s) => write!(f, "/*{}*/", s),
+        }
+    }
+}

@@ -14,6 +14,7 @@ macro_rules! define_keywords {
     ($(
         $ident:ident $(= $string_keyword:expr)?
     ),*) => {
+        #[derive(Clone, Copy)]
         pub enum Keyword {
             NoKeyword,
             $($ident),*
