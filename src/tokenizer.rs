@@ -236,6 +236,12 @@ pub struct TokenizerError {
     pub col: u64
 }
 
+/*
+ * NOTE
+ * A Tokenizer is loaded with only one query statement
+ * => line: The total number of rows in a query statement
+ *    col: Record the column where the token is in error
+ * */
 pub struct Tokenizer<'a> {
     dialect: &'a dyn Dialect,
     pub query: String,
@@ -262,8 +268,36 @@ impl<'a> Tokenizer<'a> {
         Ok(Some(t))
     }
 
+    #[inline]
+    fn consume(
+        &self,
+        chars: &mut Peekable<Chars<'_>>,
+    ) {
+        chars.next();
+    }
+
     pub fn tokenize(&mut self) -> Result<Vec<Token>, TokenizerError> {
-        unimplemented!();
+        let mut peekable = self.query.chars().peekable();
+
+        let mut tokens: Vec<Token> = vec![];
+
+        while let Some(token) = self.next_token(&mut peekable)? {
+            match &token {
+                Token::Whitespace(Whitespace::Newline) => {
+                    self.line += 1;
+                    self.col = 1;
+                },
+                Token::Whitespace(Whitespace::Tab) => self.col += 4,
+                Token::Word(w) if w.quote_style == None => self.col += w.value.len() as u64,
+                Token::Word(w) if w.quote_style != None => self.col += w.value.len() as u64 + 2,
+                Token::Number(s, _) => self.col += s.len() as u64,
+                Token::SingleQuotedString(s) => self.col += s.len() as u64,
+                _ => self.col += 1,
+            }
+
+            tokens.push(token);
+        }
+        Ok(tokens)
     }
 
     fn next_token(&self, chars: &mut Peekable<Chars<'_>>) -> Result<Option<Token>, TokenizerError> {
@@ -274,8 +308,24 @@ impl<'a> Tokenizer<'a> {
                 '\t' => self.consume_and_return(chars, Token::Whitespace(Tab)),
                 '\n' => self.consume_and_return(chars, Token::Whitespace(Newline)),
                 '\r' => {
-                    chars.next();
-                    unimplemented!();
+                    self.consume(chars);
+                    if let Some('\n') = chars.peek() {
+                        self.consume(chars);
+                    };
+                    Ok(Some(Token::Whitespace(Newline)))
+                },
+                'N' => {
+                    self.consume(chars);
+                    match chars.peek() {
+                        Some('\'') => {
+                            let s = self.tokenize_single_quoted_string(chars)?;
+                            Ok(Some(Token::NationalStringLiteral(s)))
+                        },
+                        _ => {
+                            let s = self.tokenize_word('N', chars);
+                            Ok(Some(Token::make_word(&s, None)))
+                        }
+                    }
                 },
                 _ => unimplemented!()
             },
@@ -283,6 +333,12 @@ impl<'a> Tokenizer<'a> {
                 Ok(None)
             }
         }
+    }
+
+    fn tokenize_single_quoted_string(
+        &self,
+        chars: &mut Peekable<Chars<'_>>,
+    ) -> Result<String, TokenizerError> {
     }
 }
 
