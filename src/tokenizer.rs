@@ -327,6 +327,19 @@ impl<'a> Tokenizer<'a> {
                         }
                     }
                 },
+                x @ 'x' | x @ 'X' {
+                    self.consume(chars);
+                    match chars.peek() {
+                        Some('\'') => {
+                            let s = self.tokenize_single_quoted_string(chars)?;
+                            Ok(Some(Token::HexStringLiteral(s)))
+                        },
+                        _ => {
+                            let s = self.tokenize_word(x, chars);
+                            Ok(Some(Token::make_wrod))
+                        }
+                    }
+                }
                 _ => unimplemented!()
             },
             None => {
@@ -339,6 +352,8 @@ impl<'a> Tokenizer<'a> {
         &self,
         chars: &mut Peekable<Chars<'_>>,
     ) -> Result<String, TokenizerError> {
+        let mut s = String::new();
+        self.consume(chars);
     }
 }
 
