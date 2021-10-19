@@ -339,13 +339,29 @@ impl<'a> Tokenizer<'a> {
                             Ok(Some(Token::make_wrod))
                         }
                     }
-                }
+                },
+                ch if self.dialect.is_identifier_start(ch) {
+                    self.consume(chars);
+                    let s = self.tokenize_word(ch, chars);
+
+                    if s.chars().all(|x| ('0'..'9').contains(&x) || x == '.') {
+                        // TODO
+                    }
+                },
                 _ => unimplemented!()
             },
             None => {
                 Ok(None)
             }
         }
+    }
+
+    fn tokenize_word(&self, first_char: char, chars: &mut Peekable<Chars<'_>>) -> String {
+        let mut s = first_char.to_string();
+        s.push_str(&peeking_take_while(chars, |ch| {
+            self.dialect.is_identifier_part(ch)
+        }));
+        s
     }
 
     fn tokenize_single_quoted_string(
@@ -355,5 +371,21 @@ impl<'a> Tokenizer<'a> {
         let mut s = String::new();
         self.consume(chars);
     }
+}
+
+fn peeking_take_while(
+    chars: &mut Peekable<Chars<'_>>,
+    mut predicate: impl FnMut(char) -> bool
+) -> String {
+    let mut s = String::new();
+    while let Some(&ch) = chars.peek() {
+        if predicate(ch) {
+            chars.next();
+            s.push(ch);
+        } else {
+            break;
+        }
+    }
+    s
 }
 
