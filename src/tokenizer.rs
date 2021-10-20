@@ -327,7 +327,7 @@ impl<'a> Tokenizer<'a> {
                         }
                     }
                 },
-                x @ 'x' | x @ 'X' {
+                x @ 'x' | x @ 'X' => {
                     self.consume(chars);
                     match chars.peek() {
                         Some('\'') => {
@@ -336,7 +336,7 @@ impl<'a> Tokenizer<'a> {
                         },
                         _ => {
                             let s = self.tokenize_word(x, chars);
-                            Ok(Some(Token::make_wrod))
+                            Ok(Some(Token::make_word(&s, None)))
                         }
                     }
                 },
@@ -344,9 +344,31 @@ impl<'a> Tokenizer<'a> {
                     self.consume(chars);
                     let s = self.tokenize_word(ch, chars);
 
+                    /*
+                     * NOTE: [hive] is_identifier_start mayby is '0'-'9'
+                     *  If all satisfy the lexical of numbers, they need to be treated as numbers
+                     * */
                     if s.chars().all(|x| ('0'..'9').contains(&x) || x == '.') {
-                        // TODO
+                        let mut s = peeking_take_while(&mut s.chars().peekable(), |ch| {
+                            matched!(ch, '0'..'9' | '.')
+                        });
+                        /*
+                         * NOTE: '.' does not satisfy the lexical rules of identifier, but satisfies the lexical rules of numeric values, so if the last character is'.', the following may also be numeric values
+                         * */
+                        let s2 = peeking_take_while(chars, |ch| matched!(ch, '0'..'9' | '.'));
+                        s += s2.as_str();
+                        Ok(Some(Token::Number(s, false)))
                     }
+
+                    Ok(Some(Token::make_word(&s, None)))
+                },
+                '\'' => {
+                    let s = self.tokenize_single_quoted_string(chars)?;
+                    Ok(Some(Token::SingleQuotedString(s)))
+                },
+                '`' => {
+                    let s = self.tokenize_back_quoted_string(chars)?;
+                    Ok(Some(Token::BackQuotedString(s)))
                 },
                 _ => unimplemented!()
             },
@@ -365,6 +387,14 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn tokenize_single_quoted_string(
+        &self,
+        chars: &mut Peekable<Chars<'_>>,
+    ) -> Result<String, TokenizerError> {
+        let mut s = String::new();
+        self.consume(chars);
+    }
+
+    fn tokenize_back_quote_string(
         &self,
         chars: &mut Peekable<Chars<'_>>,
     ) -> Result<String, TokenizerError> {
