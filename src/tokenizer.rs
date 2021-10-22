@@ -6,6 +6,7 @@ use std::fmt;
 use crate::dialect::keywords::{Keyword, ALL_KEYWORDS, ALL_KEYWORDS_INDEX};
 use crate::dialect::Dialect;
 
+#[derive(Debug, PartialEq, Eq)]
 pub enum Token {
     EOF,
     Word(Word),
@@ -171,6 +172,7 @@ impl Token {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct Word {
     pub value: String,
     pub quote_style: Option<char>,
@@ -206,6 +208,7 @@ impl Word {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub enum Whitespace {
     Space,
     Newline,
@@ -230,6 +233,7 @@ impl fmt::Display for Whitespace {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct TokenizerError {
     pub message: String,
     pub line: u64,
@@ -450,5 +454,35 @@ fn peeking_take_while(
 
 #[cfg(test)]
 mod test {
+    use super::super::dialect::GenericDialect;
+    use super::*;
+
+    #[test]
+    fn tokenize_single_quoted_string_test() {
+        let sql = String::from("SELECT 'a' || 'b'");
+        let dialect = GenericDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, &sql);
+        let tokens = tokenizer.tokenize().unwrap();
+
+        let expected = vec![
+            Token::make_keyword("SELECT"),
+            Token::Whitespace(Whitespace::Space),
+            Token::SingleQuotedString(String::from("a")),
+            Token::Whitespace(Whitespace::Space),
+            Token::StringConcat,
+            Token::Whitespace(Whitespace::Space),
+            Token::SingleQuotedString(String::from("b")),
+        ];
+
+        compare(expected, tokens);
+    }
+
+    fn compare(expected: Vec<Token>, actual: Vec<Token>) {
+        //println!("------------------------------");
+        //println!("tokens   = {:?}", actual);
+        //println!("expected = {:?}", expected);
+        //println!("------------------------------");
+        assert_eq!(expected, actual);
+    }
 }
 
