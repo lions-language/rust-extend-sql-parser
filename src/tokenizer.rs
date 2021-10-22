@@ -340,7 +340,7 @@ impl<'a> Tokenizer<'a> {
                         }
                     }
                 },
-                ch if self.dialect.is_identifier_start(ch) {
+                ch if self.dialect.is_identifier_start(ch) => {
                     self.consume(chars);
                     let s = self.tokenize_word(ch, chars);
 
@@ -348,16 +348,16 @@ impl<'a> Tokenizer<'a> {
                      * NOTE: [hive] is_identifier_start mayby is '0'-'9'
                      *  If all satisfy the lexical of numbers, they need to be treated as numbers
                      * */
-                    if s.chars().all(|x| ('0'..'9').contains(&x) || x == '.') {
+                    if s.chars().all(|x| ('0'..='9').contains(&x) || x == '.') {
                         let mut s = peeking_take_while(&mut s.chars().peekable(), |ch| {
-                            matched!(ch, '0'..'9' | '.')
+                            matches!(ch, '0'..='9' | '.')
                         });
                         /*
                          * NOTE: '.' does not satisfy the lexical rules of identifier, but satisfies the lexical rules of numeric values, so if the last character is'.', the following may also be numeric values
                          * */
-                        let s2 = peeking_take_while(chars, |ch| matched!(ch, '0'..'9' | '.'));
+                        let s2 = peeking_take_while(chars, |ch| matches!(ch, '0'..='9' | '.'));
                         s += s2.as_str();
-                        Ok(Some(Token::Number(s, false)))
+                        return Ok(Some(Token::Number(s, false)));
                     }
 
                     Ok(Some(Token::make_word(&s, None)))
@@ -378,6 +378,14 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
+    fn tokenizer_error<R>(&self, message: &str) -> Result<R, TokenizerError> {
+        Err(TokenizerError {
+            message: message.to_string(),
+            col: self.col,
+            line: self.line
+        })
+    }
+
     fn tokenize_word(&self, first_char: char, chars: &mut Peekable<Chars<'_>>) -> String {
         let mut s = first_char.to_string();
         s.push_str(&peeking_take_while(chars, |ch| {
@@ -392,14 +400,35 @@ impl<'a> Tokenizer<'a> {
     ) -> Result<String, TokenizerError> {
         let mut s = String::new();
         self.consume(chars);
+        while let Some(&ch) = chars.peek() {
+            match ch {
+                '\'' => {
+                    self.consume(chars);
+                    // NOTE: escaped \'
+                    let escaped_quote = chars.peek().map(|c| *c == '\'').unwrap_or(false);
+                    if escaped_quote {
+                        s.push('\'');
+                        self.consume(chars);
+                    } else {
+                        return Ok(s);
+                    }
+                },
+                _ => {
+                    s.push(ch);
+                    self.consume(chars);
+                }
+            }
+        }
+        self.tokenizer_error("Unterminated string literal")
     }
 
-    fn tokenize_back_quote_string(
+    fn tokenize_back_quoted_string(
         &self,
         chars: &mut Peekable<Chars<'_>>,
     ) -> Result<String, TokenizerError> {
         let mut s = String::new();
         self.consume(chars);
+        unimplemented!();
     }
 }
 
@@ -417,5 +446,9 @@ fn peeking_take_while(
         }
     }
     s
+}
+
+#[cfg(test)]
+mod test {
 }
 
