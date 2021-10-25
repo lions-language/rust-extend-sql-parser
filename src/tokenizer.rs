@@ -374,7 +374,26 @@ impl<'a> Tokenizer<'a> {
                     let s = self.tokenize_back_quoted_string(chars)?;
                     Ok(Some(Token::BackQuotedString(s)))
                 },
+                quote_start if self.dialect.is_delimited_identifier_start(quote_start) => {
+                    self.consume(chars);
+                    let quote_end = Word::matching_end_quote(quote_start);
+                    let s = peeking_take_while(chars, |ch| ch != quote_end);
+                    if chars.next() == Some(quote_end) {
+                        Ok(Some(Token::make_word(&s, Some(quote_start))))
+                    } else {
+                        self.tokenizer_error(
+                            format!("Expected close delimiter '{}' before EOF.",
+                                    quote_end).as_str())
+                    }
+                },
                 _ => unimplemented!()
+            },
+            '0'..'9' | '.' => {
+                let mut s = peeking_take_while(chars, |ch| matches!(ch, '0'..='9'));
+                if let Some('.') = chars.peek() {
+                    s.push('.');
+                    self.conseum();
+                }
             },
             None => {
                 Ok(None)
