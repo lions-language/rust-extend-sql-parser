@@ -419,6 +419,28 @@ impl<'a> Tokenizer<'a> {
                     };
                     Ok(Some(Token::Number(s, long)))
                 },
+                '(' => self.consume_and_return(chars, Token::LParen),
+                ')' => self.consume_and_return(chars, Token::RParen),
+                ',' => self.consume_and_return(chars, Token::Comma),
+                '-' => {
+                    self.consume(chars);
+                    match chars.peek() {
+                        Some('-') => {
+                            self.consume(chars);
+                            let comment = self.tokenize_single_comment(chars);
+                            Ok(Some(Token::Whitespace(Whitespace::SingleLineComment {
+                                prefix: "--".to_owned(),
+                                comment,
+                            })))
+                        },
+                        _ => {
+                            /*
+                             * NOTE: not '-' / None => Minus
+                             * */
+                            Ok(Some(Token::Minus))
+                        }
+                    }
+                },
                 _ => unimplemented!()
             },
             None => {
@@ -478,6 +500,20 @@ impl<'a> Tokenizer<'a> {
         let mut s = String::new();
         self.consume(chars);
         unimplemented!();
+    }
+
+    /*
+     * single comment
+     * -- xxx
+     * -- xx
+     * */
+    fn tokenize_single_comment(&self, chars: &mut Peekable<Chars<'_>>) -> String {
+        let mut comment = peeking_take_while(chars, |ch| ch != '\n');
+        if let Some(ch) = chars.next() {
+            assert_eq!(ch, '\n');
+            comment.push(ch);
+        }
+        comment
     }
 }
 
