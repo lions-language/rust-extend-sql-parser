@@ -386,14 +386,40 @@ impl<'a> Tokenizer<'a> {
                                     quote_end).as_str())
                     }
                 },
+                '0'..='9' | '.' => {
+                    /*
+                     * NOTE: before .
+                     * */
+                    let mut s = peeking_take_while(chars, |ch| matches!(ch, '0'..='9'));
+                    if let Some('.') = chars.peek() {
+                        s.push('.');
+                        self.consume(chars);
+                    }
+                    /*
+                     * NOTE: after .
+                     * */
+                    s += &peeking_take_while(chars, |ch| matches!(ch, '0'..='9'));
+
+                    /*
+                     * NOTE: s == complete numeric string, if s == "." => is period token
+                     * */
+                    if s == "." {
+                        return Ok(Some(Token::Period));
+                    }
+
+                    /*
+                     * NOTE: is numeric
+                     * */
+
+                    let long = if chars.peek() == Some(&'L') {
+                        chars.next();
+                        true
+                    } else {
+                        false
+                    };
+                    Ok(Some(Token::Number(s, long)))
+                },
                 _ => unimplemented!()
-            },
-            '0'..'9' | '.' => {
-                let mut s = peeking_take_while(chars, |ch| matches!(ch, '0'..='9'));
-                if let Some('.') = chars.peek() {
-                    s.push('.');
-                    self.conseum();
-                }
             },
             None => {
                 Ok(None)
