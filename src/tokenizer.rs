@@ -5,6 +5,7 @@ use std::fmt;
 
 use crate::dialect::keywords::{Keyword, ALL_KEYWORDS, ALL_KEYWORDS_INDEX};
 use crate::dialect::Dialect;
+use crate::dialect::SnowflakeDialect;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Token {
@@ -441,6 +442,19 @@ impl<'a> Tokenizer<'a> {
                         }
                     }
                 },
+                '/' => {
+                    self.consume(chars);
+                    match chars.peek() {
+                        Some('*') => {
+                            self.consume(chars);
+                            self.tokenize_multiline_comment(chars)
+                        },
+                        Some('/') if dialect_of!(self is SnowflakeDialect) => {
+                        },
+                        _ => {
+                        }
+                    }
+                },
                 _ => unimplemented!()
             },
             None => {
@@ -514,6 +528,38 @@ impl<'a> Tokenizer<'a> {
             comment.push(ch);
         }
         comment
+    }
+
+    /*
+     * multiline comment
+     * */
+    fn tokenize_multiline_comment(&self, chars: &mut Peekable<Chars<'_>>) -> Result<Option<Token>, TokenizerError> {
+        let mut s = String::new();
+        let mut maybe_closing_comment = false;
+        loop {
+            match chars.next() {
+                Some(ch) => {
+                    if maybe_closing_comment {
+                        if ch == '/' {
+                            /*
+                             * NOTE: end of multiline comment
+                             * */
+                            break Ok(Some(Token::Whitespace(Whitespace::MultiLineComment(s))));
+                        } else {
+                            s.push('*');
+                        }
+                    }
+
+                    maybe_closing_comment = ch == '*';
+                    if !maybe_closing_comment {
+                        s.push(ch);
+                    }
+                },
+                None => {
+                    break self.tokenizer_error("Unexpected EOF while in a multi-lien comment");
+                }
+            }
+        }
     }
 }
 
