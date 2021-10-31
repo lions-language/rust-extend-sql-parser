@@ -5,6 +5,9 @@ mod ansi;
 mod generic;
 pub(crate) mod keywords;
 mod sqlite;
+mod snowflake;
+
+pub use snowflake::SnowflakeDialect;
 
 /*
  * if obj.dialect.is::<SQLiteDialect>() ||
