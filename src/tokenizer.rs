@@ -450,11 +450,21 @@ impl<'a> Tokenizer<'a> {
                             self.tokenize_multiline_comment(chars)
                         },
                         Some('/') if dialect_of!(self is SnowflakeDialect) => {
+                            self.consume(chars);
+                            let comment = self.tokenize_single_comment(chars);
+                            Ok(Some(Token::Whitespace(Whitespace::SingleLineComment {
+                                prefix: "//".to_owned(),
+                                comment,
+                            })))
                         },
                         _ => {
+                            Ok(Some(Token::Div))
                         }
                     }
                 },
+                '+' => self.consume_and_return(chars, Token::Plus),
+                '*' => self.consume_and_return(chars, Token::Mult),
+                '%' => self.consume_and_return(chars, Token::Mod),
                 _ => unimplemented!()
             },
             None => {
