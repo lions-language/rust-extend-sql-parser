@@ -98,6 +98,8 @@ pub enum Token {
     DoubleExclamationMark,
     /// AtSign `@` used for PostgreSQL abs operator
     AtSign,
+    PGSquareRoot,
+    PGCubeRoot
 }
 
 impl fmt::Display for Token {
@@ -149,6 +151,8 @@ impl fmt::Display for Token {
             Token::AtSign => f.write_str("@"),
             Token::ShiftLeft => f.write_str("<<"),
             Token::ShiftRight => f.write_str(">>"),
+            Token::PGSquareRoot => f.write_str("|/"),
+            Token::PGCubeRoot => f.write_str("||/"),
         }
     }
 }
@@ -465,6 +469,24 @@ impl<'a> Tokenizer<'a> {
                 '+' => self.consume_and_return(chars, Token::Plus),
                 '*' => self.consume_and_return(chars, Token::Mult),
                 '%' => self.consume_and_return(chars, Token::Mod),
+                '|' => {
+                    chars.next();
+                    match chars.peek() {
+                        // |/
+                        Some('/') => self.consume_and_return(chars, Token::PGSquareRoot),
+                        Some('|') => {
+                            self.consume(chars);
+                            match chars.next() {
+                                // |//
+                                Some('/') => self.consume_and_return(chars, Token::PGCubeRoot),
+                                // ||
+                                _ => Ok(Some(Token::StringConcat))
+                            }
+                        },
+                        // only |
+                        _ => Ok(Some(Token::Pipe)),
+                    }
+                },
                 _ => unimplemented!()
             },
             None => {
