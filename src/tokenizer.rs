@@ -470,7 +470,7 @@ impl<'a> Tokenizer<'a> {
                 '*' => self.consume_and_return(chars, Token::Mult),
                 '%' => self.consume_and_return(chars, Token::Mod),
                 '|' => {
-                    chars.next();
+                    self.consume(chars);
                     match chars.peek() {
                         // |/
                         Some('/') => self.consume_and_return(chars, Token::PGSquareRoot),
@@ -489,7 +489,7 @@ impl<'a> Tokenizer<'a> {
                 },
                 '=' => {
                     self.consume(chars);
-                    match chars.next() {
+                    match chars.peek() {
                         Some('>') => {
                             self.consume_and_return(chars, Token::RArrow)
                         },
@@ -498,13 +498,42 @@ impl<'a> Tokenizer<'a> {
                 },
                 '!' => {
                     self.consume(chars);
-                    match chars.next() {
+                    match chars.peek() {
                         Some('=') => self.consume_and_return(chars, Token::Neq),
                         Some('!') => self.consume_and_return(chars, Token::DoubleExclamationMark),
                         _ => Ok(Some(Token::ExclamationMark))
                     }
                 },
                 '<' => {
+                    self.consume(chars);
+                    match chars.peek() {
+                        Some('=') => {
+                            self.consume(chars);
+                            match chars.peek() {
+                                // <=>
+                                Some('>') => self.consume_and_return(chars, Token::Spaceship),
+                                _ => Ok(Some(Token::LtEq))
+                            }
+                        },
+                        Some('>') => self.consume_and_return(chars, Token::Neq),
+                        Some('<') => self.consume_and_return(chars, Token::ShiftLeft),
+                        _ => Ok(Some(Token::Lt))
+                    }
+                },
+                '>' => {
+                    self.consume(chars);
+                    match chars.peek() {
+                        Some('=') => self.consume_and_return(chars, Token::GtEq),
+                        Some('>') => self.consume_and_return(chars, Token::ShiftLeft),
+                        _ => Ok(Some(Token::Lt))
+                    }
+                },
+                ':' => {
+                    self.consume(chars);
+                    match chars.peek() {
+                        Some(':') => self.consume_and_return(chars, Token::DoubleColon),
+                        _ => Ok(Some(Token::Colon))
+                    }
                 },
                 _ => unimplemented!()
             },
