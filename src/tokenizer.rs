@@ -487,6 +487,25 @@ impl<'a> Tokenizer<'a> {
                         _ => Ok(Some(Token::Pipe)),
                     }
                 },
+                '=' => {
+                    self.consume(chars);
+                    match chars.next() {
+                        Some('>') => {
+                            self.consume_and_return(chars, Token::RArrow)
+                        },
+                        _ => Ok(Some(Token::Eq))
+                    }
+                },
+                '!' => {
+                    self.consume(chars);
+                    match chars.next() {
+                        Some('=') => self.consume_and_return(chars, Token::Neq),
+                        Some('!') => self.consume_and_return(chars, Token::DoubleExclamationMark),
+                        _ => Ok(Some(Token::ExclamationMark))
+                    }
+                },
+                '<' => {
+                },
                 _ => unimplemented!()
             },
             None => {
