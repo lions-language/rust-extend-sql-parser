@@ -535,6 +535,17 @@ impl<'a> Tokenizer<'a> {
                         _ => Ok(Some(Token::Colon))
                     }
                 },
+                ';' => self.consume_and_return(chars, Token::SemiColon),
+                '\\' => self.consume_and_return(chars, Token::Backslash),
+                '[' => self.consume_and_return(chars, Token::LBracket),
+                ']' => self.consume_and_return(chars, Token::RBracket),
+                '&' => self.consume_and_return(chars, Token::Ampersand),
+                '^' => self.consume_and_return(chars, Token::Caret),
+                '{' => self.consume_and_return(chars, Token::LBrace),
+                '}' => self.consume_and_return(chars, Token::RBrace),
+                '#' => self.consume_and_return(chars, Token::Sharp),
+                '~' => self.consume_and_return(chars, Token::Tilde),
+                '@' => self.consume_and_return(chars, Token::AtSign),
                 _ => unimplemented!()
             },
             None => {
