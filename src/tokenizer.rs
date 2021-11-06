@@ -476,7 +476,7 @@ impl<'a> Tokenizer<'a> {
                         Some('/') => self.consume_and_return(chars, Token::PGSquareRoot),
                         Some('|') => {
                             self.consume(chars);
-                            match chars.next() {
+                            match chars.peek() {
                                 // |//
                                 Some('/') => self.consume_and_return(chars, Token::PGCubeRoot),
                                 // ||
@@ -543,10 +543,18 @@ impl<'a> Tokenizer<'a> {
                 '^' => self.consume_and_return(chars, Token::Caret),
                 '{' => self.consume_and_return(chars, Token::LBrace),
                 '}' => self.consume_and_return(chars, Token::RBrace),
-                '#' => self.consume_and_return(chars, Token::Sharp),
+                '#' if dialect_of!(self is SnowflakeDialect) => {
+                    self.consume(chars);
+                    let comment = self.tokenize_single_comment(chars);
+                    Ok(Some(Token::Whitespace(Whitespace::SingleLineComment {
+                        prefix: "#".to_owned(),
+                        comment
+                    })))
+                },
                 '~' => self.consume_and_return(chars, Token::Tilde),
+                '#' => self.consume_and_return(chars, Token::Sharp),
                 '@' => self.consume_and_return(chars, Token::AtSign),
-                _ => unimplemented!()
+                other => self.consume_and_return(chars, Token::Char(other))
             },
             None => {
                 Ok(None)
@@ -676,7 +684,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn tokenize_single_quoted_string_test() {
+    fn tokenize_string_string_concat() {
         let sql = String::from("SELECT 'a' || 'b'");
         let dialect = GenericDialect {};
         let mut tokenizer = Tokenizer::new(&dialect, &sql);

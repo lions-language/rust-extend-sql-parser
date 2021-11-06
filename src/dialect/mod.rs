@@ -8,6 +8,7 @@ mod sqlite;
 mod snowflake;
 
 pub use snowflake::SnowflakeDialect;
+pub use generic::GenericDialect;
 
 /*
  * if obj.dialect.is::<SQLiteDialect>() ||
