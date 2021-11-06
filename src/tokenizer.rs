@@ -681,7 +681,59 @@ fn peeking_take_while(
 #[cfg(test)]
 mod test {
     use super::super::dialect::GenericDialect;
+    use super::super::dialect::MsSqlDialect;
     use super::*;
+
+    #[test]
+    fn tokenize_select_1() {
+        let sql = String::from("SELECT 1");
+        let dialect = GenericDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, &sql);
+        let tokens = tokenizer.tokenize().unwrap();
+
+        let expected = vec![
+            Token::make_keyword("SELECT"),
+            Token::Whitespace(Whitespace::Space),
+            Token::Number(String::from("1"), false),
+        ];
+
+        compare(expected, tokens);
+    }
+
+    #[test]
+    fn tokenize_select_float() {
+        let sql = String::from("SELECT .1");
+        let dialect = GenericDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, &sql);
+        let tokens = tokenizer.tokenize().unwrap();
+
+        let expected = vec![
+            Token::make_keyword("SELECT"),
+            Token::Whitespace(Whitespace::Space),
+            Token::Number(String::from(".1"), false),
+        ];
+
+        compare(expected, tokens);
+    }
+
+    #[test]
+    fn tokenize_scalar_function() {
+        let sql = String::from("SELECT sqrt(1)");
+        let dialect = GenericDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, &sql);
+        let tokens = tokenizer.tokenize().unwrap();
+
+        let expected = vec![
+            Token::make_keyword("SELECT"),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_word("sqrt", None),
+            Token::LParen,
+            Token::Number(String::from("1"), false),
+            Token::RParen,
+        ];
+
+        compare(expected, tokens);
+    }
 
     #[test]
     fn tokenize_string_string_concat() {
@@ -700,6 +752,385 @@ mod test {
             Token::SingleQuotedString(String::from("b")),
         ];
 
+        compare(expected, tokens);
+    }
+
+    #[test]
+    fn tokenize_bitwise_op() {
+        let sql = String::from("SELECT one | two ^ three");
+        let dialect = GenericDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, &sql);
+        let tokens = tokenizer.tokenize().unwrap();
+
+        let expected = vec![
+            Token::make_keyword("SELECT"),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_word("one", None),
+            Token::Whitespace(Whitespace::Space),
+            Token::Pipe,
+            Token::Whitespace(Whitespace::Space),
+            Token::make_word("two", None),
+            Token::Whitespace(Whitespace::Space),
+            Token::Caret,
+            Token::Whitespace(Whitespace::Space),
+            Token::make_word("three", None),
+        ];
+
+        compare(expected, tokens);
+    }
+
+    #[test]
+    fn tokenize_simple_select() {
+        let sql = String::from("SELECT * FROM customer WHERE id = 1 LIMIT 5");
+        let dialect = GenericDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, &sql);
+        let tokens = tokenizer.tokenize().unwrap();
+
+        let expected = vec![
+            Token::make_keyword("SELECT"),
+            Token::Whitespace(Whitespace::Space),
+            Token::Mult,
+            Token::Whitespace(Whitespace::Space),
+            Token::make_keyword("FROM"),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_word("customer", None),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_keyword("WHERE"),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_word("id", None),
+            Token::Whitespace(Whitespace::Space),
+            Token::Eq,
+            Token::Whitespace(Whitespace::Space),
+            Token::Number(String::from("1"), false),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_keyword("LIMIT"),
+            Token::Whitespace(Whitespace::Space),
+            Token::Number(String::from("5"), false),
+        ];
+
+        compare(expected, tokens);
+    }
+
+    #[test]
+    fn tokenize_explain_select() {
+        let sql = String::from("EXPLAIN SELECT * FROM customer WHERE id = 1");
+        let dialect = GenericDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, &sql);
+        let tokens = tokenizer.tokenize().unwrap();
+
+        let expected = vec![
+            Token::make_keyword("EXPLAIN"),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_keyword("SELECT"),
+            Token::Whitespace(Whitespace::Space),
+            Token::Mult,
+            Token::Whitespace(Whitespace::Space),
+            Token::make_keyword("FROM"),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_word("customer", None),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_keyword("WHERE"),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_word("id", None),
+            Token::Whitespace(Whitespace::Space),
+            Token::Eq,
+            Token::Whitespace(Whitespace::Space),
+            Token::Number(String::from("1"), false),
+        ];
+
+        compare(expected, tokens);
+    }
+
+    #[test]
+    fn tokenize_explain_analyze_select() {
+        let sql = String::from("EXPLAIN ANALYZE SELECT * FROM customer WHERE id = 1");
+        let dialect = GenericDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, &sql);
+        let tokens = tokenizer.tokenize().unwrap();
+
+        let expected = vec![
+            Token::make_keyword("EXPLAIN"),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_keyword("ANALYZE"),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_keyword("SELECT"),
+            Token::Whitespace(Whitespace::Space),
+            Token::Mult,
+            Token::Whitespace(Whitespace::Space),
+            Token::make_keyword("FROM"),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_word("customer", None),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_keyword("WHERE"),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_word("id", None),
+            Token::Whitespace(Whitespace::Space),
+            Token::Eq,
+            Token::Whitespace(Whitespace::Space),
+            Token::Number(String::from("1"), false),
+        ];
+
+        compare(expected, tokens);
+    }
+
+    #[test]
+    fn tokenize_string_predicate() {
+        let sql = String::from("SELECT * FROM customer WHERE salary != 'Not Provided'");
+        let dialect = GenericDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, &sql);
+        let tokens = tokenizer.tokenize().unwrap();
+
+        let expected = vec![
+            Token::make_keyword("SELECT"),
+            Token::Whitespace(Whitespace::Space),
+            Token::Mult,
+            Token::Whitespace(Whitespace::Space),
+            Token::make_keyword("FROM"),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_word("customer", None),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_keyword("WHERE"),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_word("salary", None),
+            Token::Whitespace(Whitespace::Space),
+            Token::Neq,
+            Token::Whitespace(Whitespace::Space),
+            Token::SingleQuotedString(String::from("Not Provided")),
+        ];
+
+        compare(expected, tokens);
+    }
+
+    #[test]
+    fn tokenize_invalid_string() {
+        let sql = String::from("\nمصطفىh");
+
+        let dialect = GenericDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, &sql);
+        let tokens = tokenizer.tokenize().unwrap();
+        println!("tokens: {:#?}", tokens);
+        let expected = vec![
+            Token::Whitespace(Whitespace::Newline),
+            Token::Char('م'),
+            Token::Char('ص'),
+            Token::Char('ط'),
+            Token::Char('ف'),
+            Token::Char('ى'),
+            Token::make_word("h", None),
+        ];
+        compare(expected, tokens);
+    }
+
+    #[test]
+    fn tokenize_newline_in_string_literal() {
+        let sql = String::from("'foo\r\nbar\nbaz'");
+
+        let dialect = GenericDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, &sql);
+        let tokens = tokenizer.tokenize().unwrap();
+        let expected = vec![Token::SingleQuotedString("foo\r\nbar\nbaz".to_string())];
+        compare(expected, tokens);
+    }
+
+    #[test]
+    fn tokenize_unterminated_string_literal() {
+        let sql = String::from("select 'foo");
+
+        let dialect = GenericDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, &sql);
+        assert_eq!(
+            tokenizer.tokenize(),
+            Err(TokenizerError {
+                message: "Unterminated string literal".to_string(),
+                line: 1,
+                col: 8
+            })
+        );
+    }
+
+    #[test]
+    fn tokenize_invalid_string_cols() {
+        let sql = String::from("\n\nSELECT * FROM table\tمصطفىh");
+
+        let dialect = GenericDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, &sql);
+        let tokens = tokenizer.tokenize().unwrap();
+        println!("tokens: {:#?}", tokens);
+        let expected = vec![
+            Token::Whitespace(Whitespace::Newline),
+            Token::Whitespace(Whitespace::Newline),
+            Token::make_keyword("SELECT"),
+            Token::Whitespace(Whitespace::Space),
+            Token::Mult,
+            Token::Whitespace(Whitespace::Space),
+            Token::make_keyword("FROM"),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_keyword("table"),
+            Token::Whitespace(Whitespace::Tab),
+            Token::Char('م'),
+            Token::Char('ص'),
+            Token::Char('ط'),
+            Token::Char('ف'),
+            Token::Char('ى'),
+            Token::make_word("h", None),
+        ];
+        compare(expected, tokens);
+    }
+
+    #[test]
+    fn tokenize_right_arrow() {
+        let sql = String::from("FUNCTION(key=>value)");
+        let dialect = GenericDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, &sql);
+        let tokens = tokenizer.tokenize().unwrap();
+        let expected = vec![
+            Token::make_word("FUNCTION", None),
+            Token::LParen,
+            Token::make_word("key", None),
+            Token::RArrow,
+            Token::make_word("value", None),
+            Token::RParen,
+        ];
+        compare(expected, tokens);
+    }
+
+    #[test]
+    fn tokenize_is_null() {
+        let sql = String::from("a IS NULL");
+        let dialect = GenericDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, &sql);
+        let tokens = tokenizer.tokenize().unwrap();
+
+        let expected = vec![
+            Token::make_word("a", None),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_keyword("IS"),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_keyword("NULL"),
+        ];
+
+        compare(expected, tokens);
+    }
+
+    #[test]
+    fn tokenize_comment() {
+        let sql = String::from("0--this is a comment\n1");
+
+        let dialect = GenericDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, &sql);
+        let tokens = tokenizer.tokenize().unwrap();
+        let expected = vec![
+            Token::Number("0".to_string(), false),
+            Token::Whitespace(Whitespace::SingleLineComment {
+                prefix: "--".to_string(),
+                comment: "this is a comment\n".to_string(),
+            }),
+            Token::Number("1".to_string(), false),
+        ];
+        compare(expected, tokens);
+    }
+
+    #[test]
+    fn tokenize_comment_at_eof() {
+        let sql = String::from("--this is a comment");
+
+        let dialect = GenericDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, &sql);
+        let tokens = tokenizer.tokenize().unwrap();
+        let expected = vec![Token::Whitespace(Whitespace::SingleLineComment {
+            prefix: "--".to_string(),
+            comment: "this is a comment".to_string(),
+        })];
+        compare(expected, tokens);
+    }
+
+    #[test]
+    fn tokenize_multiline_comment() {
+        let sql = String::from("0/*multi-line\n* /comment*/1");
+
+        let dialect = GenericDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, &sql);
+        let tokens = tokenizer.tokenize().unwrap();
+        let expected = vec![
+            Token::Number("0".to_string(), false),
+            Token::Whitespace(Whitespace::MultiLineComment(
+                "multi-line\n* /comment".to_string(),
+            )),
+            Token::Number("1".to_string(), false),
+        ];
+        compare(expected, tokens);
+    }
+
+    #[test]
+    fn tokenize_multiline_comment_with_even_asterisks() {
+        let sql = String::from("\n/** Comment **/\n");
+
+        let dialect = GenericDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, &sql);
+        let tokens = tokenizer.tokenize().unwrap();
+        let expected = vec![
+            Token::Whitespace(Whitespace::Newline),
+            Token::Whitespace(Whitespace::MultiLineComment("* Comment *".to_string())),
+            Token::Whitespace(Whitespace::Newline),
+        ];
+        compare(expected, tokens);
+    }
+
+    #[test]
+    fn tokenize_mismatched_quotes() {
+        let sql = String::from("\"foo");
+
+        let dialect = GenericDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, &sql);
+        assert_eq!(
+            tokenizer.tokenize(),
+            Err(TokenizerError {
+                message: "Expected close delimiter '\"' before EOF.".to_string(),
+                line: 1,
+                col: 1
+            })
+        );
+    }
+
+    #[test]
+    fn tokenize_newlines() {
+        let sql = String::from("line1\nline2\rline3\r\nline4\r");
+
+        let dialect = GenericDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, &sql);
+        let tokens = tokenizer.tokenize().unwrap();
+        let expected = vec![
+            Token::make_word("line1", None),
+            Token::Whitespace(Whitespace::Newline),
+            Token::make_word("line2", None),
+            Token::Whitespace(Whitespace::Newline),
+            Token::make_word("line3", None),
+            Token::Whitespace(Whitespace::Newline),
+            Token::make_word("line4", None),
+            Token::Whitespace(Whitespace::Newline),
+        ];
+        compare(expected, tokens);
+    }
+
+    #[test]
+    fn tokenize_mssql_top() {
+        let sql = "SELECT TOP 5 [bar] FROM foo";
+        let dialect = MsSqlDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, sql);
+        let tokens = tokenizer.tokenize().unwrap();
+        let expected = vec![
+            Token::make_keyword("SELECT"),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_keyword("TOP"),
+            Token::Whitespace(Whitespace::Space),
+            Token::Number(String::from("5"), false),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_word("bar", Some('[')),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_keyword("FROM"),
+            Token::Whitespace(Whitespace::Space),
+            Token::make_word("foo", None),
+        ];
         compare(expected, tokens);
     }
 

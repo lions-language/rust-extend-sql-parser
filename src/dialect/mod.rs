@@ -6,9 +6,11 @@ mod generic;
 pub(crate) mod keywords;
 mod sqlite;
 mod snowflake;
+mod mssql;
 
 pub use snowflake::SnowflakeDialect;
 pub use generic::GenericDialect;
+pub use mssql::MsSqlDialect;
 
 /*
  * if obj.dialect.is::<SQLiteDialect>() ||
