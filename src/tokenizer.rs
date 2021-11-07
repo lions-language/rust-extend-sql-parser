@@ -7,7 +7,7 @@ use crate::dialect::keywords::{Keyword, ALL_KEYWORDS, ALL_KEYWORDS_INDEX};
 use crate::dialect::Dialect;
 use crate::dialect::SnowflakeDialect;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Token {
     EOF,
     Word(Word),
@@ -177,7 +177,7 @@ impl Token {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Word {
     pub value: String,
     pub quote_style: Option<char>,
@@ -213,7 +213,7 @@ impl Word {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Whitespace {
     Space,
     Newline,
