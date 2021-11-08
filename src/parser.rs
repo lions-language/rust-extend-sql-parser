@@ -72,8 +72,8 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn peek(&self) {
-        self.peek_nth_token(0);
+    pub fn peek_token(&self) -> Token {
+        self.peek_nth_token(0)
     }
 
     pub fn next_token(&mut self) -> Token {
@@ -108,6 +108,35 @@ impl<'a> Parser<'a> {
 
     pub fn expected<T>(&self, expected: &str, found: Token) -> Result<T, ParserError> {
         parser_err!(format!("Expected {}, found: {}", expected, found))
+    }
+
+    pub fn consume_token(&mut self, expected: &Token) -> bool {
+        if self.peek_token() == *expected {
+            self.next_token();
+            true
+        } else {
+            false
+        }
+    }
+    
+    pub fn expect_token(&mut self, expected: &Token) -> Result<(), ParserError> {
+        if self.consume_token(expected) {
+            Ok(())
+        } else {
+            self.expected(&expected.to_string(), self.peek_token())
+        }
+    }
+
+    fn maybe_parse<T, F>(&mut self, mut f: F) -> Option<T>
+        where
+            F: FnMut(&mut Parser) -> Result<T, ParserError> {
+        let index = self.index;
+        if let Ok(t) = f(self) {
+            Some(t)
+        } else {
+            self.index = index;
+            None
+        }
     }
 
     pub fn new(tokens: Vec<Token>, dialect: &'a dyn Dialect) -> Self {
