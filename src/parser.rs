@@ -1,8 +1,9 @@
 use log::debug;
 use std::fmt;
 
-use crate::dialect::Dialect;
-use crate::tokenizer::{TokenizerError, Token, Keyword};
+use crate::dialect::{Dialect, Keyword};
+use crate::tokenizer::{TokenizerError, Token, Tokenizer};
+use crate::ast::{Statement};
 
 #[derive(Debug)]
 pub enum ParserError {
@@ -53,6 +54,32 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
+    pub fn parse_sql(dialect: &dyn Dialect, sql: &str) -> Result<Vec<Statement>, ParserError> {
+        let mut tokenizer = Tokenizer::new(dialect, sql);
+        let tokens = tokenizer.tokenize()?;
+        let mut parser = Parser::new(tokens, dialect);
+        let mut stmts = Vec::new();
+        let mut expecting_statement_delimiter = false;
+        debug!("Parseing sql '{}'...", sql);
+        loop {
+            while parser.consume_token(&Token::SemiColon) {
+                expecting_statement_delimiter = false;
+            }
+
+            if parser.peek_token() == Token::EOF {
+                break;
+            }
+            if expecting_statement_delimiter {
+                return parser.expected("end of statement", parser.peek_token());
+            }
+
+            let statement = parser.parse_statement()?;
+            stmts.push(statement);
+            expecting_statement_delimiter = true;
+        }
+        Ok(stmts)
+    }
+
     pub fn parse_statement(&mut self) -> Result<Statement, ParserError> {
         match self.next_token() {
             Token::Word(w) => match w.keyword {
