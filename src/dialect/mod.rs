@@ -11,6 +11,7 @@ mod mssql;
 pub use snowflake::SnowflakeDialect;
 pub use generic::GenericDialect;
 pub use mssql::MsSqlDialect;
+pub use keywords::Keyword;
 
 /*
  * if obj.dialect.is::<SQLiteDialect>() ||

@@ -2,7 +2,7 @@ use log::debug;
 use std::fmt;
 
 use crate::dialect::Dialect;
-use crate::tokenizer::{TokenizerError, Token};
+use crate::tokenizer::{TokenizerError, Token, Keyword};
 
 #[derive(Debug)]
 pub enum ParserError {
@@ -50,6 +50,22 @@ pub struct Parser<'a> {
     tokens: Vec<Token>,
     index: usize,
     dialect: &'a dyn Dialect
+}
+
+impl<'a> Parser<'a> {
+    pub fn parse_statement(&mut self) -> Result<Statement, ParserError> {
+        match self.next_token() {
+            Token::Word(w) => match w.keyword {
+                Keyword::EXPLAIN => Ok(self.parse_explain()?),
+                _ => self.expected("an SQL statement", Token::Word(w)),
+            },
+            unexpected => self.expected("an SQL statement", unexpected),
+        }
+    }
+
+    pub fn parse_explain(&mut self) -> Result<Statement, ParserError> {
+        unimplemented!();
+    }
 }
 
 impl<'a> Parser<'a> {
