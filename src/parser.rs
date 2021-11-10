@@ -102,6 +102,16 @@ impl<'a> Parser<'a> {
             statement,
         })
     }
+
+    pub fn parse_keyword(&mut self, expected: Keyword) -> bool {
+        match self.peek_token() {
+            Token::Word(w) if expected == w.keyword => {
+                self.next_token();
+                true
+            },
+            _ => false,
+        }
+    }
 }
 
 impl<'a> Parser<'a> {
