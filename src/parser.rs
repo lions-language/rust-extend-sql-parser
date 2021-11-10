@@ -91,7 +91,16 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse_explain(&mut self) -> Result<Statement, ParserError> {
-        unimplemented!();
+        let analyze = self.parse_keyword(Keyword::ANALYZE);
+        let verbose = self.parse_keyword(Keyword::VERBOSE);
+
+        let statement = Box::new(self.parse_statement()?);
+
+        Ok(Statement::Explain {
+            analyze,
+            verbose,
+            statement,
+        })
     }
 }
 

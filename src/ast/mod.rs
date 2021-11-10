@@ -153,6 +153,11 @@ pub enum Statement {
         name: String,
         columns: Vec<ColumnDef>,
         with_options: Vec<SqlOption>
+    },
+    Explain {
+        analyze: bool,
+        verbose: bool,
+        statement: Box<Statement>,
     }
 }
 
@@ -171,6 +176,23 @@ impl fmt::Display for Statement {
                 )?;
 
                 Ok(())
+            },
+            Statement::Explain {
+                verbose,
+                analyze,
+                statement,
+            } => {
+                write!(f, "EXPLAIN ")?;
+
+                if *analyze {
+                    write!(f, "ANALYZE ")?;
+                }
+
+                if *verbose {
+                    write!(f, "VERBOSE ")?;
+                }
+
+                write!(f, "{}", statement)
             }
         }
     }
