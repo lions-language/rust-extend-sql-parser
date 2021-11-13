@@ -91,7 +91,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse_analyze(&mut self) -> Result<Statement, ParseeError> {
+    pub fn parse_analyze(&mut self) -> Result<Statement, ParserError> {
         self.expect_keyword(Keyword::TABLE)?;
     }
 
@@ -108,6 +108,14 @@ impl<'a> Parser<'a> {
         })
     }
 
+    pub fn expect_keyword(&mut self, expected: Keyword) -> Result<(), ParserError> {
+        if self.parse_keyword(expected) {
+            Ok(())
+        } else {
+            self.expected(format!("{:?}", &expected).as_str(), self.peek_token())
+        }
+    }
+
     pub fn parse_keyword(&mut self, expected: Keyword) -> bool {
         match self.peek_token() {
             Token::Word(w) if expected == w.keyword => {
@@ -120,14 +128,6 @@ impl<'a> Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    pub fn expect_keyword(&mut self, expected: Keyword) -> Result<(), ParserError> {
-        if self.parse_keyword(expected) {
-            Ok(())
-        } else {
-            self.expected(format!("{:?}", &expected).as_str())
-        }
-    }
-
     pub fn peek_nth_token(&self, mut n: usize) -> Token {
         let mut index = self.index;
         loop {
