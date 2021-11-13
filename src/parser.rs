@@ -93,9 +93,13 @@ impl<'a> Parser<'a> {
 
     pub fn parse_analyze(&mut self) -> Result<Statement, ParserError> {
         self.expect_keyword(Keyword::TABLE)?;
+        let table_name = self.parse_object_name()?;
     }
 
     pub fn parse_explain(&mut self) -> Result<Statement, ParserError> {
+        /*
+         * NOTE: analyze verbose [statement]
+         * */
         let analyze = self.parse_keyword(Keyword::ANALYZE);
         let verbose = self.parse_keyword(Keyword::VERBOSE);
 
@@ -106,6 +110,28 @@ impl<'a> Parser<'a> {
             verbose,
             statement,
         })
+    }
+}
+
+impl<'a> Parse<'a> {
+    pub fn parse_object_name(&mut self) -> Result<ObjectName, ParserError> {
+        let mut idents = vec![];
+        loop {
+            idents.push(self.parse_identifier()?);
+            if !self.consume_token(&Token::Period) {
+                break;
+            }
+        }
+        Ok(ObjectName(idents))
+    }
+
+    pub fn parse_identifier(&mut self) -> Result<Ident, ParserError> {
+        match self.next_token() {
+            Token::Word(w) => Ok(w.to_ident()),
+            Token::SingleQuotedString(s) => Ok(Ident::with_quote('\'', s)),
+            Token::BackQuotedString(s) => Ok(Ident::with_quote('`', s)),
+            unexpected => self.expected("identifier", unexpected),
+        }
     }
 
     pub fn expect_keyword(&mut self, expected: Keyword) -> Result<(), ParserError> {

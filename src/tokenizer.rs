@@ -6,6 +6,7 @@ use std::fmt;
 use crate::dialect::keywords::{Keyword, ALL_KEYWORDS, ALL_KEYWORDS_INDEX};
 use crate::dialect::Dialect;
 use crate::dialect::SnowflakeDialect;
+use crate::ast::Ident;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Token {
