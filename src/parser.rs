@@ -2,8 +2,8 @@ use log::debug;
 use std::fmt;
 
 use crate::dialect::{Dialect, Keyword};
-use crate::tokenizer::{TokenizerError, Token, Tokenizer};
-use crate::ast::{Statement};
+use crate::tokenizer::{TokenizerError, Token, Tokenizer, Word};
+use crate::ast::*;
 
 #[derive(Debug)]
 pub enum ParserError {
@@ -94,6 +94,24 @@ impl<'a> Parser<'a> {
     pub fn parse_analyze(&mut self) -> Result<Statement, ParserError> {
         self.expect_keyword(Keyword::TABLE)?;
         let table_name = self.parse_object_name()?;
+        let mut for_columns = false;
+        let mut cache_metadata = false;
+        let mut noscan = false;
+        let mut partitions = None;
+        let mut compute_statistics = false;
+        let mut columns = vec![];
+        loop {
+            match self.parse_one_of_keyword(&[
+                Keyword::PARTITION,
+                Keyword::FOR,
+                Keyword::CACHE,
+                Keyword::NOSCAN,
+                Keyword::COMPUTE,
+            ]) {
+                Some(Keyword::PARTITION) => {
+                },
+            }
+        }
     }
 
     pub fn parse_explain(&mut self) -> Result<Statement, ParserError> {
@@ -113,7 +131,7 @@ impl<'a> Parser<'a> {
     }
 }
 
-impl<'a> Parse<'a> {
+impl<'a> Parser<'a> {
     pub fn parse_object_name(&mut self) -> Result<ObjectName, ParserError> {
         let mut idents = vec![];
         loop {
@@ -245,6 +263,15 @@ impl<'a> Parser<'a> {
             tokens: tokens,
             index: 0,
             dialect
+        }
+    }
+}
+
+impl Word {
+    pub fn to_ident(&self) -> Ident {
+        Ident {
+            value: self.value.clone(),
+            quote_style: self.quote_style,
         }
     }
 }
