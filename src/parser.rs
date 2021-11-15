@@ -109,9 +109,41 @@ impl<'a> Parser<'a> {
                 Keyword::COMPUTE,
             ]) {
                 Some(Keyword::PARTITION) => {
+                    self.expect_token(&Token::LParen)?;
+                    paritions = Some(self.parse_comma_separated(Parser::parse_expr)?);
+                    self.expect_token(&Token::RParen)?;
                 },
+                Some(Keyword::NOSCAN) => {
+                    noscan = true;
+                },
+                Some(Keyword::FOR) => {
+                    self.expect_keyword(Keyword::COLUMNS)?;
+
+                    columns = self.maybe_parse(|parser| {
+                        parser.parse_comma_separated(Parser::parse_identifier)
+                    }).unwrap_or_default();
+                    for_columns = true;
+                },
+                Some(Keyword::CACHE) => {
+                    self.expect_keyword(Keyword::METADATA)?;
+                    cache_metadata = true;
+                },
+                Some(Keyword::COMPUTE) => {
+                    self.expect_keyword(Keyword::STATISTICS)?;
+                    compute_statistics = true;
+                },
+                _ => break,
             }
         }
+
+        Ok(Statement::Analyze {
+            table_name,
+            for_columns,
+            columns,
+            cache_metadata,
+            noscan,
+            compute_statistics
+        })
     }
 
     pub fn parse_explain(&mut self) -> Result<Statement, ParserError> {
