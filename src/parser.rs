@@ -101,7 +101,7 @@ impl<'a> Parser<'a> {
         let mut compute_statistics = false;
         let mut columns = vec![];
         loop {
-            match self.parse_one_of_keyword(&[
+            match self.parse_one_of_keywords(&[
                 Keyword::PARTITION,
                 Keyword::FOR,
                 Keyword::CACHE,
@@ -110,7 +110,7 @@ impl<'a> Parser<'a> {
             ]) {
                 Some(Keyword::PARTITION) => {
                     self.expect_token(&Token::LParen)?;
-                    paritions = Some(self.parse_comma_separated(Parser::parse_expr)?);
+                    partitions = Some(self.parse_comma_separated(Parser::parse_expr)?);
                     self.expect_token(&Token::RParen)?;
                 },
                 Some(Keyword::NOSCAN) => {
@@ -161,9 +161,43 @@ impl<'a> Parser<'a> {
             statement,
         })
     }
+
+    pub fn parse_subexpr(&mut self, precedence: u8) -> Result<Expr, ParserError> {
+        debug!("parsing expr");
+        let mut expr = self.parse_prefix();
+        debug!("prefix: {:?}", expr);
+        loop {
+            let next_precedence = self.get_next_precedence()?;
+            debug!("next precedence: {:?}", next_precedence);
+
+            if precedence >= next_precedence {
+                break;
+            }
+
+            expr = self.parse_infix(expr, next_precedence);
+        }
+
+        Ok(expr)
+    }
 }
 
 impl<'a> Parser<'a> {
+    pub fn parse_one_of_keywords(&mut self, keywords: &[Keyword]) -> Option<Keyword> {
+        match self.peek_token() {
+            Token::Word(w) => {
+                keywords
+                    .iter()
+                    .find(|keyword| **keyword == w.keyword)
+                    .map(|keyword| {
+                        // consume token
+                        self.next_token();
+                        *keyword
+                    })
+            },
+            _ => None,
+        }
+    }
+
     pub fn parse_object_name(&mut self) -> Result<ObjectName, ParserError> {
         let mut idents = vec![];
         loop {
