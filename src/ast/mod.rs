@@ -149,6 +149,15 @@ pub struct SqlOption {
 }
 
 pub enum Statement {
+    Analyze {
+        table_name: ObjectName,
+        partitions: Option<Vec<Expr>>,
+        for_columns: bool,
+        columns: Vec<Ident>,
+        cache_metadata: bool,
+        noscan: bool,
+        compute_statistics: bool
+    },
     CreateTable {
         name: String,
         columns: Vec<ColumnDef>,

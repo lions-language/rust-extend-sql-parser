@@ -140,9 +140,10 @@ impl<'a> Parser<'a> {
             table_name,
             for_columns,
             columns,
+            partitions,
             cache_metadata,
             noscan,
-            compute_statistics
+            compute_statistics,
         })
     }
 
@@ -160,6 +161,15 @@ impl<'a> Parser<'a> {
             verbose,
             statement,
         })
+    }
+
+    pub fn parse_prefix(&mut self) -> Result<Expr, ParserError> {
+        return_ok_if_some!(self.maybe_parse(|parser| {
+            match parser.parse_data_type()? {
+                DataType::Interval => parser.parse_literal_interval(),
+                DataType::Custom(..) => parser_err!("dummy"),
+            }
+        }))
     }
     
     pub fn parse_expr(&mut self) -> Result<Expr, ParserError> {
