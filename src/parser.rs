@@ -161,6 +161,10 @@ impl<'a> Parser<'a> {
             statement,
         })
     }
+    
+    pub fn parse_expr(&mut self) -> Result<Expr, ParserError> {
+        self.parse_subexpr(0)
+    }
 
     pub fn parse_subexpr(&mut self, precedence: u8) -> Result<Expr, ParserError> {
         debug!("parsing expr");
@@ -178,6 +182,19 @@ impl<'a> Parser<'a> {
         }
 
         Ok(expr)
+    }
+
+    pub fn parse_comma_separated<T, F>(&mut self, mut f: F) -> Result<Vec<T>, ParserError>
+    where
+        F: FnMut(&mut Parser<'a>) -> Result<T, ParserError> {
+        let mut values = vec![];
+        loop {
+            values.push(f(self)?);
+            if !self.consme_token(&Token::Comma) {
+                break;
+            }
+        }
+        Ok(values)
     }
 }
 
