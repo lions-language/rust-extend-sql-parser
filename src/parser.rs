@@ -202,13 +202,35 @@ impl<'a> Parser<'a> {
             values.push(f(self)?);
             if !self.consume_token(&Token::Comma) {
                 break;
-            }
+            
         }
         Ok(values)
     }
 }
 
 impl<'a> Parser<'a> {
+    pub fn parse_data_type(&mut self) -> Result<DataType, ParserError> {
+        match self.nnext_token() {
+            Keyword::BOOLEAN => Ok(DataType::Boolean),
+            Keyword::FLOAT => Ok(DataType::Float(self.parse_optional_precision()?)),
+            Keyword::REAL => Ok(DataType::Real),
+            Keyword::DOUBLE => {
+                let _ = self.parse_keyword(Keyword::PRECISION);
+                Ok(DataType::Double)
+            }
+        }
+    }
+
+    pub fn parse_optional_precision(&mut self) -> Result<Option<u64>, ParserError> {
+        if self.consume_token(&Token::LParen) {
+            let n = self.parse_literal_uint()?;
+            self.expect_token(&Token::RParen)?;
+            Ok(Some(n))
+        } else {
+            Ok(None)
+        }
+    }
+
     pub fn parse_one_of_keywords(&mut self, keywords: &[Keyword]) -> Option<Keyword> {
         match self.peek_token() {
             Token::Word(w) => {
