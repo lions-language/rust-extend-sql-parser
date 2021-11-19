@@ -6,11 +6,12 @@ mod query;
 
 use std::fmt;
 
-use self::data_type::DataType;
+pub use self::data_type::DataType;
 use self::ddl::ColumnDef;
 pub(crate) use self::value::Value;
 use self::operator::{UnaryOperator, BinaryOperator};
 
+#[derive(Debug)]
 pub struct Ident {
     pub value: String,
     // ' or " or ` or [
@@ -79,6 +80,7 @@ impl fmt::Display for ObjectName {
 }
 
 //////////////////////////////////
+#[derive(Debug)]
 pub enum Expr {
     Identifier(Ident),
     BinaryOp {

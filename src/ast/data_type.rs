@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 
 use std::fmt;
 
+use super::ObjectName;
+
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum DataType {
     /// Fixed-length character type e.g. CHAR(10) / CHAR()
@@ -33,7 +35,7 @@ pub enum DataType {
     Text,
     String,
     Bytea,
-    // Custom(ObjectName)
+    Custom(ObjectName),
     Array(Box<DataType>)
 }
 

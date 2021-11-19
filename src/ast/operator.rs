@@ -1,5 +1,6 @@
 use std::fmt;
 
+#[derive(Debug)]
 pub enum UnaryOperator {
     Plus,
     Minus,
@@ -17,6 +18,7 @@ impl fmt::Display for UnaryOperator {
 }
 
 /////////////////////////////
+#[derive(Debug)]
 pub enum BinaryOperator {
     Plus,
     Minus,

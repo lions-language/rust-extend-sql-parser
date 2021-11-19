@@ -200,7 +200,7 @@ impl<'a> Parser<'a> {
         let mut values = vec![];
         loop {
             values.push(f(self)?);
-            if !self.consme_token(&Token::Comma) {
+            if !self.consume_token(&Token::Comma) {
                 break;
             }
         }
