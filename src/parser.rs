@@ -202,9 +202,58 @@ impl<'a> Parser<'a> {
             values.push(f(self)?);
             if !self.consume_token(&Token::Comma) {
                 break;
-            
+            }
         }
         Ok(values)
+    }
+
+    pub fn parse_literal_uint(&mut self) -> Result<Expr, ParserError> {
+        let value = self.parse_literal_string()?;
+
+        let leading_field = match self.peek_token() {
+            Token::Word(kw)
+                if [
+                    Keyword::YEAR,
+                    Keyword::MONTH,
+                    Keyword::DAY,
+                    Keyword::HOUR,
+                    Keyword::MINUTE,
+                    Keyword::SECOND
+                ]
+                .iter()
+                .any(|d| kw.keyword == *d) => {
+                Some(self.parse_date_time_field()?)
+            },
+            _ => None
+        };
+
+        let (leading_precision, last_field, fsec_precision) =
+            if leading_field == Some(DeteTimeField::Second) {
+                let last_field = None;
+                let (leading_precision, fsec_precision) = self.parse_optional_precision_scale()?;
+                (leading_precision, last_field, fsec_precision)
+            } else {
+                let leading_precision = self.parse_optional_precision()?;
+                if self.parse_keyword(Keyword::TO) {
+                    let field_value = Some(self.parse_date_time_field()?);
+                    let fsec_precision = if last_field == Some(DateTimeField::Second) {
+                        self.parse_optional_precision()?
+                    } else {
+                        None
+                    };
+                    (leading_precision, last_field, fsec_precision)
+                } else {
+                    (leading_precision, None, None)
+                }
+            };
+
+        Ok(Expr::Value(Value::Interval {
+            value,
+            leading_field,
+            leading_precision,
+            last_field,
+            fractional_seconds_precision: fsec_precision,
+        }))
     }
 }
 
