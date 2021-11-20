@@ -255,6 +255,49 @@ impl<'a> Parser<'a> {
             fractional_seconds_precision: fsec_precision,
         }))
     }
+
+    pub fn parse_date_time_field(&mut self) -> Result<DateTimeField, ParserError> {
+        match self.next_token() {
+            Token::Word(w) => match w.keyword {
+                Keyword::YEAR => Ok(DateTimeField::Year),
+                Keyword::MONTH => Ok(DateTimeField::Month),
+                Keyword::DAY => Ok(DateTimeField::Day),
+                Keyword::HOUR => Ok(DataTimeField::Hour),
+                Keyword::MINUTE => Ok(DateTimeField::Minute),
+                Keyword::SECOND => Ok(DateTimeField::Second),
+                _ => self.expected("date/time field", Token::Word(w))?,
+            },
+            unexpected => self.expected("date/time field", unexpected),
+        }
+    }
+
+    pub fn parse_optional_precision(&mut self) -> Result<Option<u64>, ParserError> {
+        if self.consume_token(&Token::LParen) {
+            let n = self.parse_literal_uint()?;
+            self.expect_token(&Token::RParen)?;
+            Ok(Some(n))
+                oo
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn parse_optional_precision_scale(
+        &mut self,
+    ) -> Result<(Option<u64>, Option<u64>), ParserError> {
+        if self.consume_token(&Token::LParen) {
+            let n = self.parse_literal_uint()?;
+            let scale = if self.consume_token(&Token::Comma) {
+                Some(self.parse_literal_uint()?)
+            } else {
+                None
+            };
+            self.expect_token(&Token::RParen)?;
+            Ok((Some(n), scale))
+        } else {
+            Ok((None, None))
+        }
+    }
 }
 
 impl<'a> Parser<'a> {
