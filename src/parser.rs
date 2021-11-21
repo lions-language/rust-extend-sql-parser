@@ -178,7 +178,7 @@ impl<'a> Parser<'a> {
 
     pub fn parse_subexpr(&mut self, precedence: u8) -> Result<Expr, ParserError> {
         debug!("parsing expr");
-        let mut expr = self.parse_prefix();
+        let mut expr = self.parse_prefix()?;
         debug!("prefix: {:?}", expr);
         loop {
             let next_precedence = self.get_next_precedence()?;
@@ -207,7 +207,28 @@ impl<'a> Parser<'a> {
         Ok(values)
     }
 
-    pub fn parse_literal_uint(&mut self) -> Result<Expr, ParserError> {
+    pub fn parse_literal_uint(&mut self) -> Result<u64, ParserError> {
+        match self.next_token() {
+            Token::Number(s, _) => s.parse::<u64>().map_err(|e| {
+                ParserError::ParserError(format!("Could not parse '{}' as u64: {}", s, e))
+            }),
+            unexpected => self.expected("literal int", unexpected),
+        }
+    }
+
+    pub fn parse_literal_string(&mut self) -> Result<String, ParserError> {
+        match self.next_token() {
+            Token::Word(Word {
+                value,
+                keyword,
+                ..
+            }) if keyword == Keyword::NoKeyword => Ok(value),
+            Token::SingleQuotedString(s) => Ok(s),
+            unexpected => self.expected("literal string", unexpected),
+        }
+    }
+
+    pub fn parse_literal_interval(&mut self) -> Result<Expr, ParserError> {
         let value = self.parse_literal_string()?;
 
         let leading_field = match self.peek_token() {
@@ -228,14 +249,14 @@ impl<'a> Parser<'a> {
         };
 
         let (leading_precision, last_field, fsec_precision) =
-            if leading_field == Some(DeteTimeField::Second) {
+            if leading_field == Some(DateTimeField::Second) {
                 let last_field = None;
                 let (leading_precision, fsec_precision) = self.parse_optional_precision_scale()?;
                 (leading_precision, last_field, fsec_precision)
             } else {
                 let leading_precision = self.parse_optional_precision()?;
                 if self.parse_keyword(Keyword::TO) {
-                    let field_value = Some(self.parse_date_time_field()?);
+                    let last_field = Some(self.parse_date_time_field()?);
                     let fsec_precision = if last_field == Some(DateTimeField::Second) {
                         self.parse_optional_precision()?
                     } else {
@@ -262,7 +283,7 @@ impl<'a> Parser<'a> {
                 Keyword::YEAR => Ok(DateTimeField::Year),
                 Keyword::MONTH => Ok(DateTimeField::Month),
                 Keyword::DAY => Ok(DateTimeField::Day),
-                Keyword::HOUR => Ok(DataTimeField::Hour),
+                Keyword::HOUR => Ok(DateTimeField::Hour),
                 Keyword::MINUTE => Ok(DateTimeField::Minute),
                 Keyword::SECOND => Ok(DateTimeField::Second),
                 _ => self.expected("date/time field", Token::Word(w))?,
@@ -276,7 +297,6 @@ impl<'a> Parser<'a> {
             let n = self.parse_literal_uint()?;
             self.expect_token(&Token::RParen)?;
             Ok(Some(n))
-                oo
         } else {
             Ok(None)
         }
@@ -309,17 +329,7 @@ impl<'a> Parser<'a> {
             Keyword::DOUBLE => {
                 let _ = self.parse_keyword(Keyword::PRECISION);
                 Ok(DataType::Double)
-            }
-        }
-    }
-
-    pub fn parse_optional_precision(&mut self) -> Result<Option<u64>, ParserError> {
-        if self.consume_token(&Token::LParen) {
-            let n = self.parse_literal_uint()?;
-            self.expect_token(&Token::RParen)?;
-            Ok(Some(n))
-        } else {
-            Ok(None)
+            },
         }
     }
 
