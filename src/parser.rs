@@ -330,6 +330,32 @@ impl<'a> Parser<'a> {
                 let _ = self.parse_keyword(Keyword::PRECISION);
                 Ok(DataType::Double)
             },
+            Keyword::TINYINT => Ok(DataType::TinyInt),
+            Keyword::SMALLINT => Ok(DataType::SmallInt),
+            Keyword::INT | Keyword::INTEGER => Ok(DataType::Int),
+            Keyword::BIGINT => Ok(DataType::BigInt),
+            Keyword::VARCHAR => Ok(DataType::Varchar(self.parse_optional_precision()?)),
+            Keyword::CHAR | Keyword::CHARACTER => {
+                if self.parse_keyword(Keyword::VARYING) {
+                    Ok(DataType::Varchar(self.parse_optional_precision()?))
+                } else {
+                    Ok(DataType::Char(self.parse_optional_precision_scale()?))
+                }
+            },
+            Keyword::UUID => Ok(DataType::Uuid),
+            Keyword::DATE => Ok(DataType::Date),
+            Keyword::TIMESTAMP => {
+                if self.parse_keyword(Keyword::WITH) || self.parse_keyword(Keyword::WITHOUT) {
+                    self.expect_keywords(&[Keyword::TIME, Keyword::ZONE])?;
+                }
+                Ok(DataType::TimeStamp)
+            },
+            Keyword::TIME => {
+                if self.parse_keyword(Keyword::WITH) || self.parse_keyword(Keyword::WITHOUT) {
+                    self.expect_keywords(&[Keyword::TIME, Keyword::ZONE])?;
+                }
+                Ok(DataType::Time)
+            }
         }
     }
 

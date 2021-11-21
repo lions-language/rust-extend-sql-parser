@@ -82,6 +82,7 @@ impl fmt::Display for Value {
 }
 
 ////////////////////////////////
+#[derive(PartialEq, Eq)]
 pub enum DateTimeField {
     Year,
     Month,
