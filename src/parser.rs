@@ -322,7 +322,7 @@ impl<'a> Parser<'a> {
 
 impl<'a> Parser<'a> {
     pub fn parse_data_type(&mut self) -> Result<DataType, ParserError> {
-        match self.nnext_token() {
+        match self.next_token() {
             Keyword::BOOLEAN => Ok(DataType::Boolean),
             Keyword::FLOAT => Ok(DataType::Float(self.parse_optional_precision()?)),
             Keyword::REAL => Ok(DataType::Real),
@@ -355,8 +355,30 @@ impl<'a> Parser<'a> {
                     self.expect_keywords(&[Keyword::TIME, Keyword::ZONE])?;
                 }
                 Ok(DataType::Time)
+            },
+            Keyword::INTERVAL => Ok(DataType::Interval),
+            Keyword::REGCLASS => Ok(DataType::Regclass),
+            Keyword::STRING => Ok(DataType::String),
+            Keyword::TEXT => {
+                if self.consume_token(&Token::LBracket) {
+                    self.expect_token(&Token::RBracket)?;
+                    Ok(DataType::Array(Box::new(DataType::Text)))
+                } else {
+                    Ok(DataType::Text)
+                }
+            },
+            Keyword::BYTEA => Ok(DataType::Bytea),
+            Keyword::NUMNERIC | Keyword::DECIMAK | Keyword::DEC => {
+                let (precision, scale) = self.parse_optional_precision_scale()?;
+                Ok(DataType::Decimak(precision, scale))
+            },
+            _ => {
+                self.prev_token();
+                let type_name = self.parse_object_name()?;
+                Ok(DataType::Custom(type_name))
             }
-        }
+        },
+        unexpected => self.expected("a data type name", unexpected),
     }
 
     pub fn parse_one_of_keywords(&mut self, keywords: &[Keyword]) -> Option<Keyword> {
