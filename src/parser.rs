@@ -370,7 +370,7 @@ impl<'a> Parser<'a> {
             Keyword::BYTEA => Ok(DataType::Bytea),
             Keyword::NUMNERIC | Keyword::DECIMAK | Keyword::DEC => {
                 let (precision, scale) = self.parse_optional_precision_scale()?;
-                Ok(DataType::Decimak(precision, scale))
+                Ok(DataType::Decimal(precision, scale))
             },
             _ => {
                 self.prev_token();
