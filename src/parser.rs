@@ -168,8 +168,21 @@ impl<'a> Parser<'a> {
             match parser.parse_data_type()? {
                 DataType::Interval => parser.parse_literal_interval(),
                 DataType::Custom(..) => parser_err!("dummy"),
+                data_type => Ok(Expr::TypedString {
+                    data_type,
+                    value: parser.parse_literal_string()?,
+                }),
             }
-        }))
+        }));
+
+        let expr = match self.next_token() {
+            Token::Word(w) => match w.keyword {
+                Keyword::TRUE | Keyword::FALSE | Keyword::NULL => {
+                    self.prev_token();
+                    Ok(Expr::Value(self.parse_value()?))
+                },
+            }
+        };
     }
     
     pub fn parse_expr(&mut self) -> Result<Expr, ParserError> {
@@ -323,62 +336,64 @@ impl<'a> Parser<'a> {
 impl<'a> Parser<'a> {
     pub fn parse_data_type(&mut self) -> Result<DataType, ParserError> {
         match self.next_token() {
-            Keyword::BOOLEAN => Ok(DataType::Boolean),
-            Keyword::FLOAT => Ok(DataType::Float(self.parse_optional_precision()?)),
-            Keyword::REAL => Ok(DataType::Real),
-            Keyword::DOUBLE => {
-                let _ = self.parse_keyword(Keyword::PRECISION);
-                Ok(DataType::Double)
-            },
-            Keyword::TINYINT => Ok(DataType::TinyInt),
-            Keyword::SMALLINT => Ok(DataType::SmallInt),
-            Keyword::INT | Keyword::INTEGER => Ok(DataType::Int),
-            Keyword::BIGINT => Ok(DataType::BigInt),
-            Keyword::VARCHAR => Ok(DataType::Varchar(self.parse_optional_precision()?)),
-            Keyword::CHAR | Keyword::CHARACTER => {
-                if self.parse_keyword(Keyword::VARYING) {
-                    Ok(DataType::Varchar(self.parse_optional_precision()?))
-                } else {
-                    Ok(DataType::Char(self.parse_optional_precision_scale()?))
+            Token::Word(w) => match w.keyword {
+                Keyword::BOOLEAN => Ok(DataType::Boolean),
+                Keyword::FLOAT => Ok(DataType::Float(self.parse_optional_precision()?)),
+                Keyword::REAL => Ok(DataType::Real),
+                Keyword::DOUBLE => {
+                    let _ = self.parse_keyword(Keyword::PRECISION);
+                    Ok(DataType::Double)
+                },
+                Keyword::TINYINT => Ok(DataType::TinyInt),
+                Keyword::SMALLINT => Ok(DataType::SmallInt),
+                Keyword::INT | Keyword::INTEGER => Ok(DataType::Int),
+                Keyword::BIGINT => Ok(DataType::BigInt),
+                Keyword::VARCHAR => Ok(DataType::Varchar(self.parse_optional_precision()?)),
+                Keyword::CHAR | Keyword::CHARACTER => {
+                    if self.parse_keyword(Keyword::VARYING) {
+                        Ok(DataType::Varchar(self.parse_optional_precision()?))
+                    } else {
+                        Ok(DataType::Char(self.parse_optional_precision_scale()?))
+                    }
+                },
+                Keyword::UUID => Ok(DataType::Uuid),
+                Keyword::DATE => Ok(DataType::Date),
+                Keyword::TIMESTAMP => {
+                    if self.parse_keyword(Keyword::WITH) || self.parse_keyword(Keyword::WITHOUT) {
+                        self.expect_keywords(&[Keyword::TIME, Keyword::ZONE])?;
+                    }
+                    Ok(DataType::TimeStamp)
+                },
+                Keyword::TIME => {
+                    if self.parse_keyword(Keyword::WITH) || self.parse_keyword(Keyword::WITHOUT) {
+                        self.expect_keywords(&[Keyword::TIME, Keyword::ZONE])?;
+                    }
+                    Ok(DataType::Time)
+                },
+                Keyword::INTERVAL => Ok(DataType::Interval),
+                Keyword::REGCLASS => Ok(DataType::Regclass),
+                Keyword::STRING => Ok(DataType::String),
+                Keyword::TEXT => {
+                    if self.consume_token(&Token::LBracket) {
+                        self.expect_token(&Token::RBracket)?;
+                        Ok(DataType::Array(Box::new(DataType::Text)))
+                    } else {
+                        Ok(DataType::Text)
+                    }
+                },
+                Keyword::BYTEA => Ok(DataType::Bytea),
+                Keyword::NUMNERIC | Keyword::DECIMAK | Keyword::DEC => {
+                    let (precision, scale) = self.parse_optional_precision_scale()?;
+                    Ok(DataType::Decimal(precision, scale))
+                },
+                _ => {
+                    self.prev_token();
+                    let type_name = self.parse_object_name()?;
+                    Ok(DataType::Custom(type_name))
                 }
             },
-            Keyword::UUID => Ok(DataType::Uuid),
-            Keyword::DATE => Ok(DataType::Date),
-            Keyword::TIMESTAMP => {
-                if self.parse_keyword(Keyword::WITH) || self.parse_keyword(Keyword::WITHOUT) {
-                    self.expect_keywords(&[Keyword::TIME, Keyword::ZONE])?;
-                }
-                Ok(DataType::TimeStamp)
-            },
-            Keyword::TIME => {
-                if self.parse_keyword(Keyword::WITH) || self.parse_keyword(Keyword::WITHOUT) {
-                    self.expect_keywords(&[Keyword::TIME, Keyword::ZONE])?;
-                }
-                Ok(DataType::Time)
-            },
-            Keyword::INTERVAL => Ok(DataType::Interval),
-            Keyword::REGCLASS => Ok(DataType::Regclass),
-            Keyword::STRING => Ok(DataType::String),
-            Keyword::TEXT => {
-                if self.consume_token(&Token::LBracket) {
-                    self.expect_token(&Token::RBracket)?;
-                    Ok(DataType::Array(Box::new(DataType::Text)))
-                } else {
-                    Ok(DataType::Text)
-                }
-            },
-            Keyword::BYTEA => Ok(DataType::Bytea),
-            Keyword::NUMNERIC | Keyword::DECIMAK | Keyword::DEC => {
-                let (precision, scale) = self.parse_optional_precision_scale()?;
-                Ok(DataType::Decimal(precision, scale))
-            },
-            _ => {
-                self.prev_token();
-                let type_name = self.parse_object_name()?;
-                Ok(DataType::Custom(type_name))
-            }
-        },
-        unexpected => self.expected("a data type name", unexpected),
+            unexpected => self.expected("a data type name", unexpected),
+        }
     }
 
     pub fn parse_one_of_keywords(&mut self, keywords: &[Keyword]) -> Option<Keyword> {
