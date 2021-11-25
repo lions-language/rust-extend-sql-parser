@@ -6,6 +6,7 @@ use std::fmt;
 use super::ObjectName;
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug)]
 pub enum DataType {
     /// Fixed-length character type e.g. CHAR(10) / CHAR()
     Char(Option<u64>),

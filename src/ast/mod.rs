@@ -72,6 +72,7 @@ impl fmt::Display for Ident {
 
 //////////////////////////////////
 // possibly multi-part, i.e. db.schema.obj
+#[derive(Debug)]
 pub struct ObjectName(pub Vec<Ident>);
 
 impl fmt::Display for ObjectName {
@@ -92,6 +93,15 @@ pub enum Expr {
     UnaryOp {
         op: UnaryOperator,
         expr: Box<Expr>
+    },
+    Value(Value),
+    TypedString {
+        data_type: DataType,
+        value: String
+    },
+    MapAccess {
+        column: Box<Expr>,
+        key: String
     },
 }
 

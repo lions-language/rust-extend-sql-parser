@@ -1,5 +1,6 @@
 use std::fmt;
 
+#[derive(Debug)]
 pub enum Value {
     Number(String, bool),
     // Number(BigDecimal, bool),
