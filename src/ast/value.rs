@@ -1,9 +1,16 @@
 use std::fmt;
 
+#[cfg(feature = "bigdecimal")]
+use bigdecimal::BigDecimal;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 #[derive(Debug)]
 pub enum Value {
+    #[cfg(not(feature = "serde"))]
     Number(String, bool),
-    // Number(BigDecimal, bool),
+    #[cfg(feature = "bigdecimal")]
+    Number(BigDecimal, bool),
     SingleQuotedString(String),
     NationalStringLiteral(String),
     HexStringLiteral(String),
@@ -83,7 +90,7 @@ impl fmt::Display for Value {
 }
 
 ////////////////////////////////
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub enum DateTimeField {
     Year,
     Month,

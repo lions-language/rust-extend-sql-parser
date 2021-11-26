@@ -360,13 +360,13 @@ impl<'a> Parser<'a> {
                 Keyword::DATE => Ok(DataType::Date),
                 Keyword::TIMESTAMP => {
                     if self.parse_keyword(Keyword::WITH) || self.parse_keyword(Keyword::WITHOUT) {
-                        self.expect_keywords(&[Keyword::TIME, Keyword::ZONE])?;
+                        self.expect_keyword(&[Keyword::TIME, Keyword::ZONE])?;
                     }
                     Ok(DataType::TimeStamp)
                 },
                 Keyword::TIME => {
                     if self.parse_keyword(Keyword::WITH) || self.parse_keyword(Keyword::WITHOUT) {
-                        self.expect_keywords(&[Keyword::TIME, Keyword::ZONE])?;
+                        self.expect_keyword(&[Keyword::TIME, Keyword::ZONE])?;
                     }
                     Ok(DataType::Time)
                 },
@@ -382,7 +382,7 @@ impl<'a> Parser<'a> {
                     }
                 },
                 Keyword::BYTEA => Ok(DataType::Bytea),
-                Keyword::NUMNERIC | Keyword::DECIMAK | Keyword::DEC => {
+                Keyword::NUMERIC | Keyword::DECIMAL | Keyword::DEC => {
                     let (precision, scale) = self.parse_optional_precision_scale()?;
                     Ok(DataType::Decimal(precision, scale))
                 },
