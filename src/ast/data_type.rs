@@ -28,7 +28,7 @@ pub enum DataType {
     Real,
     Double,
     Boolean,
-    Data,
+    Date,
     Time,
     Timestamp,
     Interval,

@@ -362,11 +362,11 @@ impl<'a> Parser<'a> {
                     if self.parse_keyword(Keyword::WITH) || self.parse_keyword(Keyword::WITHOUT) {
                         self.expect_keyword(&[Keyword::TIME, Keyword::ZONE])?;
                     }
-                    Ok(DataType::TimeStamp)
+                    Ok(DataType::Timestamp)
                 },
                 Keyword::TIME => {
                     if self.parse_keyword(Keyword::WITH) || self.parse_keyword(Keyword::WITHOUT) {
-                        self.expect_keyword(&[Keyword::TIME, Keyword::ZONE])?;
+                        self.expect_keywords(&[Keyword::TIME, Keyword::ZONE])?;
                     }
                     Ok(DataType::Time)
                 },
@@ -438,6 +438,13 @@ impl<'a> Parser<'a> {
         } else {
             self.expected(format!("{:?}", &expected).as_str(), self.peek_token())
         }
+    }
+
+    pub fn expect_keywords(&mut self, expected: &[Keyword]) -> Result<(), ParserError> {
+        for &kw in expected {
+            self.expect_keyword(kw)?
+        }
+        Ok(())
     }
 
     pub fn parse_keyword(&mut self, expected: Keyword) -> bool {
