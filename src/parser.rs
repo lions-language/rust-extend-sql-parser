@@ -353,14 +353,14 @@ impl<'a> Parser<'a> {
                     if self.parse_keyword(Keyword::VARYING) {
                         Ok(DataType::Varchar(self.parse_optional_precision()?))
                     } else {
-                        Ok(DataType::Char(self.parse_optional_precision_scale()?))
+                        Ok(DataType::Char(self.parse_optional_precision()?))
                     }
                 },
                 Keyword::UUID => Ok(DataType::Uuid),
                 Keyword::DATE => Ok(DataType::Date),
                 Keyword::TIMESTAMP => {
                     if self.parse_keyword(Keyword::WITH) || self.parse_keyword(Keyword::WITHOUT) {
-                        self.expect_keyword(&[Keyword::TIME, Keyword::ZONE])?;
+                        self.expect_keywords(&[Keyword::TIME, Keyword::ZONE])?;
                     }
                     Ok(DataType::Timestamp)
                 },
@@ -393,6 +393,14 @@ impl<'a> Parser<'a> {
                 }
             },
             unexpected => self.expected("a data type name", unexpected),
+        }
+    }
+
+    pub fn get_next_precedence(&self) -> Result<u8, ParserError> {
+        let token = self.peek_token();
+        debug!("get_next_precedence() {:?}", token);
+        match token {
+            Token::Word(w) if w.keyword == Keyword::OR => Ok(5),
         }
     }
 
