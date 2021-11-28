@@ -396,11 +396,45 @@ impl<'a> Parser<'a> {
         }
     }
 
+    const UNARY_NOT_PREC: u8 = 15;
+    const BETWEEN_PREC: u8 = 20;
+    const PLUS_MINUS_PREC: u8 = 30;
+
     pub fn get_next_precedence(&self) -> Result<u8, ParserError> {
         let token = self.peek_token();
         debug!("get_next_precedence() {:?}", token);
         match token {
             Token::Word(w) if w.keyword == Keyword::OR => Ok(5),
+            Token::Word(w) if w.keyword == Keyword::AND => Ok(10),
+            Token::Word(w) if w.keyword == Keyword::NOT => match self.peek_nth_token(1) {
+                Token::Word(w) if w.keyword == Keyword::IN => Ok(Self::BETWEEN_PREC),
+                Token::Word(w) if w.keyword == Keyword::BETWEEN => Ok(Self::BETWEEN_PREC),
+                Token::Word(w) if w.keyword == Keyword::LIKE => Ok(Self::BETWEEN_PREC),
+                Token::Word(w) if w.keyword == Keyword::ILIKE => Ok(Self::BETWEEN_PREC),
+                _ => Ok(0),
+            },
+            Token::Word(w) if w.keyword == Keyword::IS => Ok(17),
+            Token::Word(w) if w.keyword == Keyword::IN => Ok(Self::BETWEEN_PREC),
+            Token::Word(w) if w.keyword == Keyword::BETWEEN => Ok(Self::BETWEEN_PREC),
+            Token::Word(w) if w.keyword == Keyword::LIKE => Ok(Self::BETWEEN_PREC),
+            Token::Word(w) if w.keyword == Keyword::ILIKE => Ok(Self::BETWEEN_PREC),
+            Token::Eq
+            | Token::Lt
+            | Token::LtEq
+            | Token::Neq
+            | Token::Gt
+            | Token::GtEq
+            | Token::DoubleEq
+            | Token::Spaceship => Ok(20),
+            Token::Pipe => Ok(21),
+            Token::Caret | Token::Sharp | Token::ShiftRight | Token::ShiftLeft => Ok(22),
+            Token::Ampersand => Ok(23),
+            Token::Plus | Token::Minus => Ok(Self::PLUS_MINUS_PREC),
+            Token::Mult | Token::Div | Token::Mod | Token::StringConcat => Ok(40),
+            Token::DoubleColon => Ok(50),
+            Token::ExclamationMark => Ok(50),
+            Token::LBracket | Token::RBracket => Ok(10),
+            _ => Ok(0),
         }
     }
 
