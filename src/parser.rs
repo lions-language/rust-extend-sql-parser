@@ -207,6 +207,19 @@ impl<'a> Parser<'a> {
         Ok(expr)
     }
 
+    fn parse_value(&mut self) -> Result<Value, ParserError> {
+        match self.next_token() {
+            Token::Word(w) => match w.keyword {
+                Keyword::TRUE => Ok(Value::Boolean(true)),
+                Keyword::FALSE => Ok(Value::Boolean(false)),
+                Keyword::NULL => Ok(Value::Null),
+                Keyword::NoKeyword if w.quote_style.is_some() => match w.quote_style {
+                    Some('"') => Ok(Value::Double)
+                }
+            }
+        }
+    }
+
     pub fn parse_comma_separated<T, F>(&mut self, mut f: F) -> Result<Vec<T>, ParserError>
     where
         F: FnMut(&mut Parser<'a>) -> Result<T, ParserError> {
