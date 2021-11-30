@@ -214,9 +214,20 @@ impl<'a> Parser<'a> {
                 Keyword::FALSE => Ok(Value::Boolean(false)),
                 Keyword::NULL => Ok(Value::Null),
                 Keyword::NoKeyword if w.quote_style.is_some() => match w.quote_style {
-                    Some('"') => Ok(Value::Double)
-                }
-            }
+                    Some('"') => Ok(Value::DoubleQuotedString(w.value)),
+                    Some('\'') => Ok(Value::SingleQuotedString(w.value)),
+                    _ => self.expected("A value?", Token::Word(w))?,
+                },
+                _ => self.expected("a concrete value", Token::Word(w)),
+            },
+            Token::Number(ref n, l) => match n.parse() {
+                Ok(n) => Ok(Value::Number(n, l)),
+                Err(e) => parser_err!(format!("Could not parse '{}' as number: {}", n, e)),
+            },
+            Token::SingleQuotedString(ref s) => Ok(Value::SingleQuotedString(s.to_string())),
+            Token::NationalStringLiteral(ref s) => Ok(Value::NationalStringLiteral(s.to_string())),
+            Token::HexStringLiteral(ref s) => Ok(Value::HexStringLiteral(s.to_string())),
+            unexpected => self.expected("a value", unexpected),
         }
     }
 
