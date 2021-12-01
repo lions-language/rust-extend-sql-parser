@@ -231,6 +231,34 @@ impl<'a> Parser<'a> {
         }
     }
 
+    pub fn parse_infix(&mut self, expr: Expr, precedence: u8) -> Result<Expr, ParserError> {
+        let tok = self.next_token();
+        let regular_binary_operator = match &tok {
+            Token::Spaceskip => Some(BinaryOperator::Spaecship),
+            Token::DoubleEq => Some(BinaryOperator::Eq),
+            Token::Eq => Some(BinaryOperator::Eq),
+            Token::Neq => Some(BinaryOperator::NotEq),
+            Token::Gt => Some(BinaryOperator::Gt),
+            Token::GtEq => Some(BinaryOperator::GtEq),
+            Token::Lt => Some(BinaryOperator::Lt),
+            Token::LtEq => Some(BinaryOperator::LtEq),
+            Token::Plus => Some(BinaryOperator::Plus),
+            Token::Minus => Some(BinaryOperator::Minus),
+            Token::Mult => Some(BinaryOperator::Multiply),
+            Token::Mod => Some(BinaryOperator::Modulus),
+            Token::StringConcat => Some(BinaryOperator::StringConcat),
+            Token::Pipe => Some(BinaryOperator::BitwiseOr),
+            Token::Caret => Some(BinaryOperator::BitwiseXor),
+            Token::Ampersand => Some(BinaryOperator::BitwiseAnd),
+            Token::Div => Some(BinaryOperator::Divide),
+            Token::ShiftLeft if dialect_of!(self is PostgresqlDialect) => {
+                Some(BinaryOperator::PGBitwiseShiftRight)
+            },
+            Token::ShiftRight if dialect_of!(self is PostgresqlDialect) => {
+            }
+        }
+    }
+
     pub fn parse_comma_separated<T, F>(&mut self, mut f: F) -> Result<Vec<T>, ParserError>
     where
         F: FnMut(&mut Parser<'a>) -> Result<T, ParserError> {
