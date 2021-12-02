@@ -252,9 +252,20 @@ impl<'a> Parser<'a> {
             Token::Ampersand => Some(BinaryOperator::BitwiseAnd),
             Token::Div => Some(BinaryOperator::Divide),
             Token::ShiftLeft if dialect_of!(self is PostgresqlDialect) => {
-                Some(BinaryOperator::PGBitwiseShiftRight)
+                Some(BinaryOperator::PGBitwiseShiftLeft)
             },
             Token::ShiftRight if dialect_of!(self is PostgresqlDialect) => {
+                Some(BinaryOperator::PGBitwiseShiftRight)
+            },
+            Token::Shape if dialect_of!(self is PostgresqlDialect) => {
+                Some(BinaryOperator::PGBitwiseXor)
+            },
+            Token::Word(w) => match w.keyword {
+                Keyword::AND => Some(BinaryOperator::And),
+                Keyword::OR => Some(BinaryOperator::Or),
+                Keyword::Like => Some(BinaryOperator::Like),
+                Keyword::ILike => Some(BinaryOperator),
+                Keyword::NOT => Some(BinaryOperator),
             }
         }
     }
