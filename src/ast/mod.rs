@@ -10,7 +10,7 @@ pub use self::data_type::DataType;
 pub use value::DateTimeField;
 use self::ddl::ColumnDef;
 pub(crate) use self::value::Value;
-use self::operator::{UnaryOperator, BinaryOperator};
+pub use self::operator::{UnaryOperator, BinaryOperator};
 
 #[derive(Debug)]
 pub struct Ident {

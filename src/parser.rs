@@ -201,7 +201,7 @@ impl<'a> Parser<'a> {
                 break;
             }
 
-            expr = self.parse_infix(expr, next_precedence);
+            expr = self.parse_infix(expr, next_precedence)?;
         }
 
         Ok(expr)
@@ -234,7 +234,7 @@ impl<'a> Parser<'a> {
     pub fn parse_infix(&mut self, expr: Expr, precedence: u8) -> Result<Expr, ParserError> {
         let tok = self.next_token();
         let regular_binary_operator = match &tok {
-            Token::Spaceskip => Some(BinaryOperator::Spaecship),
+            Token::Spaceship => Some(BinaryOperator::Spaceship),
             Token::DoubleEq => Some(BinaryOperator::Eq),
             Token::Eq => Some(BinaryOperator::Eq),
             Token::Neq => Some(BinaryOperator::NotEq),
@@ -251,21 +251,46 @@ impl<'a> Parser<'a> {
             Token::Caret => Some(BinaryOperator::BitwiseXor),
             Token::Ampersand => Some(BinaryOperator::BitwiseAnd),
             Token::Div => Some(BinaryOperator::Divide),
-            Token::ShiftLeft if dialect_of!(self is PostgresqlDialect) => {
-                Some(BinaryOperator::PGBitwiseShiftLeft)
-            },
-            Token::ShiftRight if dialect_of!(self is PostgresqlDialect) => {
-                Some(BinaryOperator::PGBitwiseShiftRight)
-            },
-            Token::Shape if dialect_of!(self is PostgresqlDialect) => {
-                Some(BinaryOperator::PGBitwiseXor)
-            },
+            // Token::ShiftLeft if dialect_of!(self is PostgresqlDialect) => {
+            //     Some(BinaryOperator::PGBitwiseShiftLeft)
+            // },
+            // Token::ShiftRight if dialect_of!(self is PostgresqlDialect) => {
+            //     Some(BinaryOperator::PGBitwiseShiftRight)
+            // },
+            // Token::Shape if dialect_of!(self is PostgresqlDialect) => {
+            //     Some(BinaryOperator::PGBitwiseXor)
+            // },
             Token::Word(w) => match w.keyword {
                 Keyword::AND => Some(BinaryOperator::And),
                 Keyword::OR => Some(BinaryOperator::Or),
-                Keyword::Like => Some(BinaryOperator::Like),
-                Keyword::ILike => Some(BinaryOperator),
-                Keyword::NOT => Some(BinaryOperator),
+                Keyword::LIKE => Some(BinaryOperator::Like),
+                Keyword::ILIKE => Some(BinaryOperator::ILike),
+                Keyword::NOT => {
+                    if self.parse_keyword(Keyword::LIKE) {
+                        Some(BinaryOperator::NotLike)
+                    } else if self.parse_keyword(Keyword::ILIKE) {
+                        Some(BinaryOperator::NotILike)
+                    } else {
+                        None
+                    }
+                },
+                _ => None,
+            },
+            _ => None,
+        };
+
+        if let Some(op) = regular_binary_operator {
+            Ok(Expr::BinaryOp {
+                left: Box::new(expr),
+                op,
+                right: Box::new(self.parse_subexpr(precedence)?),
+            })
+        } else if let Token::Word(w) = &tok {
+            match w.keyword {
+                Keyword::IS => {
+                },
+                Keyword::NOT | Keyword::IN | Keyword::BETWEEN => {
+                }
             }
         }
     }
