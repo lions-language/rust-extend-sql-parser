@@ -231,6 +231,38 @@ impl<'a> Parser<'a> {
         }
     }
 
+    pub fn parse_in(&mut self, expr: Expr, negated: bool) -> Result<Expr, ParserError> {
+        self.expect_token(&Token::LParen)?;
+        let in_op = if self.parse_token(Keyword::SELECT) || self.parse_keyword(Keyword::WITH) {
+            self.prev_token();
+            Expr::InSubquery {
+                expr: Box::new(expr),
+                subquery: Box::new(self.parse_query()?),
+                negated,
+            }
+        } else {
+            Expr::InList => {
+                expr: Box::new(expr),
+                list: self.parse_comma_separated(Parser::parse_expr)?,
+                negated,
+            }
+        };
+        self.expect_token(&Token::RParen)?;
+        Ok(in_op)
+    }
+
+    pub fn parse_between(&mut self, expr: Expr, negated: bool) -> Result<Expr, ParserError> {
+        let low = self.parse_subexpr(Self::BETWEEN_PREC)?;
+        self.expect_token(Keyword::AND)?;
+        let high = self.parse_subexpr(Self::BETWEEN_PREC)?;
+        Ok(Expr::Between {
+            expr: Box::new(expr),
+            negated,
+            low: Box::new(low),
+            high: Box::new(high),
+        })
+    }
+
     pub fn parse_infix(&mut self, expr: Expr, precedence: u8) -> Result<Expr, ParserError> {
         let tok = self.next_token();
         let regular_binary_operator = match &tok {
@@ -310,7 +342,12 @@ impl<'a> Parser<'a> {
                 _ => parser_err!(format!("No infix parser for token {:?}", tok)),
             }
         } else if Token::DoubleColon == tok {
+            self.parse_pg_cast(expr)
         } else if Token::ExclamationMark == tok {
+            Ok(Expr::UnaryOp {
+                op: UnaryOperator::PGPostfixFactorial,
+                expr: Box::new(expr)
+            })
         } else if Token::LBracket == tok {
             self.parse_map_access(expr)
         } else {
