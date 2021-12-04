@@ -288,10 +288,33 @@ impl<'a> Parser<'a> {
         } else if let Token::Word(w) = &tok {
             match w.keyword {
                 Keyword::IS => {
+                    if self.parse_keyword(Keyword::NULL) {
+                        Ok(Expr::IsNull(Box::new(expr)))
+                    } else if self.parse_keywords(&[Keyword::NOT, Keyword::NULL]) {
+                        Ok(Expr::IsNotNull(Box::new(expr)))
+                    } else {
+                        self.expected("NULL or NOT NULL after IS", self.peek_token())
+                    }
                 },
                 Keyword::NOT | Keyword::IN | Keyword::BETWEEN => {
-                }
+                    self.prev_token();
+                    let negated = self.parse_keyword(Keyword::NOT);
+                    if self.parse_keyword(Keyword::IN) {
+                        self.parse_in(expr, negated)
+                    } else if self.parse_keyword(Keyword::BETWEEN) {
+                        self.parse_between(expr, negated)
+                    } else {
+                        self.expected("IN or BETWEEN after NOT", self.peek_token())
+                    }
+                },
+                _ => parser_err!(format!("No infix parser for token {:?}", tok)),
             }
+        } else if Token::DoubleColon == tok {
+        } else if Token::ExclamationMark == tok {
+        } else if Token::LBracket == tok {
+            self.parse_map_access(expr)
+        } else {
+            parser_err!(format!("No infix parser for token {:?}", tok))
         }
     }
 
@@ -634,7 +657,7 @@ impl<'a> Parser<'a> {
     pub fn prev_token(&mut self) {
         loop {
             assert!(self.index > 0);
-            self.index += 1;
+            self.index -= 1;
             if let Some(Token::Whitespace(_)) = self.tokens.get(self.index) {
                 continue;
             }
