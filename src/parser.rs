@@ -233,7 +233,7 @@ impl<'a> Parser<'a> {
 
     pub fn parse_in(&mut self, expr: Expr, negated: bool) -> Result<Expr, ParserError> {
         self.expect_token(&Token::LParen)?;
-        let in_op = if self.parse_token(Keyword::SELECT) || self.parse_keyword(Keyword::WITH) {
+        let in_op = if self.parse_keyword(Keyword::SELECT) || self.parse_keyword(Keyword::WITH) {
             self.prev_token();
             Expr::InSubquery {
                 expr: Box::new(expr),
@@ -241,7 +241,7 @@ impl<'a> Parser<'a> {
                 negated,
             }
         } else {
-            Expr::InList => {
+            Expr::InList {
                 expr: Box::new(expr),
                 list: self.parse_comma_separated(Parser::parse_expr)?,
                 negated,
@@ -253,7 +253,7 @@ impl<'a> Parser<'a> {
 
     pub fn parse_between(&mut self, expr: Expr, negated: bool) -> Result<Expr, ParserError> {
         let low = self.parse_subexpr(Self::BETWEEN_PREC)?;
-        self.expect_token(Keyword::AND)?;
+        self.expect_keyword(Keyword::AND)?;
         let high = self.parse_subexpr(Self::BETWEEN_PREC)?;
         Ok(Expr::Between {
             expr: Box::new(expr),
@@ -645,6 +645,17 @@ impl<'a> Parser<'a> {
             },
             _ => false,
         }
+    }
+
+    pub fn parse_keywords(&mut self, keyword: &[Keyword]) -> bool {
+        let index = self.index;
+        for &keyword in keywords {
+            if !self.parse_keyword(keyword) {
+                self.index = index;
+                return false;
+            }
+        }
+        true
     }
 }
 

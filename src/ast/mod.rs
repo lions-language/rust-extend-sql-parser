@@ -103,6 +103,24 @@ pub enum Expr {
         column: Box<Expr>,
         key: String
     },
+    IsNull(Box<Expr>),
+    IsNotNull(Box<Expr>),
+    InList {
+        expr: Box<Expr>,
+        list: Vec<Expr>,
+        negated: bool,
+    },
+    InSubquery {
+        expr: Box<Expr>,
+        subquery: Box<Expr>,
+        negated: bool,
+    },
+    Between {
+        expr: Box<Expr>,
+        negated: bool,
+        low: Box<Expr>,
+        high: Box<Expr>,
+    }
 }
 
 impl fmt::Display for Expr {
