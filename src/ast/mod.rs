@@ -85,6 +85,7 @@ impl fmt::Display for ObjectName {
 #[derive(Debug)]
 pub enum Expr {
     Identifier(Ident),
+    CompoundIdentifier(Vec<Ident>),
     BinaryOp {
         op: BinaryOperator,
         left: Box<Expr>,

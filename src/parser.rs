@@ -342,16 +342,31 @@ impl<'a> Parser<'a> {
                 _ => parser_err!(format!("No infix parser for token {:?}", tok)),
             }
         } else if Token::DoubleColon == tok {
-            self.parse_pg_cast(expr)
+            // self.parse_pg_cast(expr)
+            unimplemented!();
         } else if Token::ExclamationMark == tok {
-            Ok(Expr::UnaryOp {
-                op: UnaryOperator::PGPostfixFactorial,
-                expr: Box::new(expr)
-            })
+            unimplemented!();
+            // Ok(Expr::UnaryOp {
+            //     op: UnaryOperator::PGPostfixFactorial,
+            //     expr: Box::new(expr)
+            // })
         } else if Token::LBracket == tok {
             self.parse_map_access(expr)
         } else {
             parser_err!(format!("No infix parser for token {:?}", tok))
+        }
+    }
+
+    pub fn parse_map_access(&mut self, expr: Expr)  -> Result<Expr, ParserError> {
+        let key = self.parse_literal_string()?;
+        let tok = self.consume_token(&Token::RBracket);
+        debug!("Tok: {}", tok);
+        match expr {
+            e @ Expr::Identifier(_) | e @ Expr::CompoundIdentifier(_) => Ok(Expr::MapAccess {
+                column: Box::new(e),
+                key,
+            }),
+            _ => Ok(expr),
         }
     }
 
