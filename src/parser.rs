@@ -357,6 +357,64 @@ impl<'a> Parser<'a> {
         }
     }
 
+    pub fn parse_query(&mut self) -> Result<Query, ParserError> {
+        let with = if self.parse_keyword(Keyword::WITH) {
+            Some(With {
+                recursive: self.parse_keyword(Keyword::RECURSIVE),
+                cte_tables: self.parse_comma_separated(Parser::parse_cte)?,
+            })
+        } else {
+            None
+        };
+
+        if !self.parse_keyword(Keyword::INSERT) {
+            let body = self.parse_query_body(0)?;
+
+            let order_by = if self.parse_keywords(&[Keyword::ORDER, Keyword::BY]) {
+                self.parse_comma_separated(Parser::parse_order_by_expr)?
+            } else {
+                vec![]
+            };
+
+            let limit = if self.parse_keyword(Keyword::LIMIT) {
+                self.parse_limit()?;
+            } else {
+                None
+            };
+
+            let offset = if self.parse_keyword(Keyword::OFFSET) {
+                Some(self.parse_offset()?)
+            } else {
+                None
+            };
+
+            let fetch = if self.parse_keyword(Keyword::FETCH) {
+                Some(self.parse_fetch()?)
+            } else {
+                None
+            }
+
+            Ok(Query {
+                with,
+                body,
+                order_by,
+                limit,
+                offset,
+                fetch,
+            })
+        } else {
+            let insert = self.parse_insert()?;
+            Ok(Query {
+                with,
+                body: SetExpr::Insert(insert),
+                limit: None,
+                order_by: vec![],
+                offset: None,
+                fetch: None,
+            })
+        }
+    }
+
     pub fn parse_map_access(&mut self, expr: Expr)  -> Result<Expr, ParserError> {
         let key = self.parse_literal_string()?;
         let tok = self.consume_token(&Token::RBracket);
@@ -662,7 +720,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse_keywords(&mut self, keyword: &[Keyword]) -> bool {
+    pub fn parse_keywords(&mut self, keywords: &[Keyword]) -> bool {
         let index = self.index;
         for &keyword in keywords {
             if !self.parse_keyword(keyword) {
