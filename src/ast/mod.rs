@@ -180,6 +180,20 @@ pub struct SqlOption {
     pub value: Value
 }
 
+//////////////////////////////////
+pub enum SetExpr {
+    Select(Box<Select>),
+    Query(Box<>Query),
+    SetOperation {
+        op: SetOperator,
+        all: bool,
+        left: Box<SetExpr>,
+        right: Box<SetExpr>
+    },
+    Values(Values),
+    Insert(Statement),
+}
+
 pub enum Statement {
     Analyze {
         table_name: ObjectName,

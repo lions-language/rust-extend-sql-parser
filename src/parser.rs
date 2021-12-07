@@ -392,7 +392,7 @@ impl<'a> Parser<'a> {
                 Some(self.parse_fetch()?)
             } else {
                 None
-            }
+            };
 
             Ok(Query {
                 with,
