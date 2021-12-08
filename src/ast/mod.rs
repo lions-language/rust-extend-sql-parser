@@ -194,6 +194,43 @@ pub enum SetExpr {
     Insert(Statement),
 }
 
+impl fmt::Display for SetExpr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            SetExpr::Select(s) => write!(f, "{}", s),
+            SetExpr::Query(s) => write!(f, "({})", q),
+            SetExpr::Values(v) => write!(f, "{}", v),
+            SetExpr::Insert(v) -=> write!(f, "{}", v),
+            SetExpr::SetOperation => {
+                left,
+                right,
+                op,
+                all,
+            } => {
+                let all_str = if *all { " ALL" } else { "" };
+                write!(f, "{} {}{} {}", left, op, all_str, right);
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum SetOperator {
+    Union,
+    Except,
+    Intersect,
+}
+
+impl fmt::Display for SetOperator {
+    fn fmt(&self, f: &mut fmt::Formattor) -> fmt::Result {
+        f.write_str(match self {
+            SetOperator::Union => "UNION",
+            SetOperator::Except => "EXCEPT",
+            SetOperator::Intersect => "INTERSECT",
+        })
+    }
+}
+
 pub enum Statement {
     Analyze {
         table_name: ObjectName,
