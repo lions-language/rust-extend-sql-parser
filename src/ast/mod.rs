@@ -231,6 +231,26 @@ impl fmt::Display for SetOperator {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Select {
+    pub distinct: bool,
+    pub top: Option<Top>,
+    pub projection: Vec<SelectItem>,
+    pub from: Vec<TableWithJoins>,
+    pub lateral_views: Vec<LateralView>,
+    pub selection: Option<Expr>,
+    pub group_by: Vec<Expr>,
+    pub cluster_by: Vec<Expr>,
+    pub distinct_by: Vec<Expr>,
+    pub sort_by: Vec<Expr>,
+    pub having: Option<Expr>
+}
+
+impl fmt::Display for Select {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    }
+}
+
 pub enum Statement {
     Analyze {
         table_name: ObjectName,
