@@ -12,7 +12,7 @@ use self::ddl::ColumnDef;
 pub(crate) use self::value::Value;
 pub use self::operator::{UnaryOperator, BinaryOperator};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Ident {
     pub value: String,
     // ' or " or ` or [
@@ -72,7 +72,7 @@ impl fmt::Display for Ident {
 
 //////////////////////////////////
 // possibly multi-part, i.e. db.schema.obj
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ObjectName(pub Vec<Ident>);
 
 impl fmt::Display for ObjectName {
@@ -82,7 +82,7 @@ impl fmt::Display for ObjectName {
 }
 
 //////////////////////////////////
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Expr {
     Identifier(Ident),
     CompoundIdentifier(Vec<Ident>),
@@ -148,6 +148,7 @@ impl fmt::Display for Expr {
 }
 
 //////////////////////////////////
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum FunctionArg {
     Named {
         name: Ident,
@@ -175,15 +176,17 @@ impl fmt::Display for FunctionArg {
 }
 
 //////////////////////////////////
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SqlOption {
     pub name: Ident,
     pub value: Value
 }
 
 //////////////////////////////////
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum SetExpr {
     Select(Box<Select>),
-    Query(Box<>Query),
+    Query(Box<Query>),
     SetOperation {
         op: SetOperator,
         all: bool,
@@ -200,7 +203,7 @@ impl fmt::Display for SetExpr {
             SetExpr::Select(s) => write!(f, "{}", s),
             SetExpr::Query(s) => write!(f, "({})", q),
             SetExpr::Values(v) => write!(f, "{}", v),
-            SetExpr::Insert(v) -=> write!(f, "{}", v),
+            SetExpr::Insert(v) => write!(f, "{}", v),
             SetExpr::SetOperation => {
                 left,
                 right,
@@ -251,6 +254,7 @@ impl fmt::Display for Select {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Statement {
     Analyze {
         table_name: ObjectName,

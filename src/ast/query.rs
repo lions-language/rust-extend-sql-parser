@@ -1,5 +1,6 @@
 use crate::ast::*;
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Query {
     pub with: Option<With>,
     pub body: SetExpr,
@@ -17,6 +18,7 @@ impl fmt::Display for Query {
 }
 
 //////////////////////////////
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Values(pub Vec<Vec<Expr>>);
 
 impl fmt::Display for Values {
@@ -34,6 +36,7 @@ impl fmt::Display for Values {
 }
 
 //////////////////////////////
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum SetExpr {
     Select(Box<Select>),
     Query(Box<Query>),
@@ -72,6 +75,7 @@ impl fmt::Display for SetExpr {
 }
 
 //////////////////////////////
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum SetOperator {
     Union,
     Except,
@@ -89,6 +93,7 @@ impl fmt::Display for SetOperator {
 }
 
 //////////////////////////////
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Top {
     pub with_ties: bool,
     pub percent: bool,
@@ -110,6 +115,7 @@ impl fmt::Display for Top {
 }
 
 //////////////////////////////
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum SelectItem {
     UnnamedExpr(Expr),
     ExprWithAlias{
@@ -141,6 +147,7 @@ impl fmt::Display for SelectItem {
 }
 
 //////////////////////////////
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Select {
     pub distinct: bool,
     pub top: Option<Top>,
@@ -200,6 +207,7 @@ impl fmt::Display for Select {
 }
 
 //////////////////////////////
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LateralView {
     pub laterval_view: Expr,
     pub laterval_view_name: ObjectName,
@@ -466,4 +474,4 @@ impl fmt::Display for TableWithJoins {
 
         Ok(())
     }
-}
+i}
