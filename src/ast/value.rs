@@ -5,7 +5,7 @@ use bigdecimal::BigDecimal;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Value {
     #[cfg(not(feature = "serde"))]
     Number(String, bool),
@@ -90,7 +90,7 @@ impl fmt::Display for Value {
 }
 
 ////////////////////////////////
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum DateTimeField {
     Year,
     Month,

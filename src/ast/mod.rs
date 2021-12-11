@@ -9,8 +9,10 @@ use std::fmt;
 pub use self::data_type::DataType;
 pub use value::DateTimeField;
 use self::ddl::ColumnDef;
-pub(crate) use self::value::Value;
+pub(crate) use self::value::{Value};
 pub use self::operator::{UnaryOperator, BinaryOperator};
+pub use self::query::{Query, Values, Top, SelectItem, TableWithJoins, LateralView,
+                    With, Select, SetExpr, SetOperator};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Ident {
@@ -180,78 +182,6 @@ impl fmt::Display for FunctionArg {
 pub struct SqlOption {
     pub name: Ident,
     pub value: Value
-}
-
-//////////////////////////////////
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum SetExpr {
-    Select(Box<Select>),
-    Query(Box<Query>),
-    SetOperation {
-        op: SetOperator,
-        all: bool,
-        left: Box<SetExpr>,
-        right: Box<SetExpr>
-    },
-    Values(Values),
-    Insert(Statement),
-}
-
-impl fmt::Display for SetExpr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            SetExpr::Select(s) => write!(f, "{}", s),
-            SetExpr::Query(s) => write!(f, "({})", q),
-            SetExpr::Values(v) => write!(f, "{}", v),
-            SetExpr::Insert(v) => write!(f, "{}", v),
-            SetExpr::SetOperation => {
-                left,
-                right,
-                op,
-                all,
-            } => {
-                let all_str = if *all { " ALL" } else { "" };
-                write!(f, "{} {}{} {}", left, op, all_str, right);
-            }
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum SetOperator {
-    Union,
-    Except,
-    Intersect,
-}
-
-impl fmt::Display for SetOperator {
-    fn fmt(&self, f: &mut fmt::Formattor) -> fmt::Result {
-        f.write_str(match self {
-            SetOperator::Union => "UNION",
-            SetOperator::Except => "EXCEPT",
-            SetOperator::Intersect => "INTERSECT",
-        })
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Select {
-    pub distinct: bool,
-    pub top: Option<Top>,
-    pub projection: Vec<SelectItem>,
-    pub from: Vec<TableWithJoins>,
-    pub lateral_views: Vec<LateralView>,
-    pub selection: Option<Expr>,
-    pub group_by: Vec<Expr>,
-    pub cluster_by: Vec<Expr>,
-    pub distinct_by: Vec<Expr>,
-    pub sort_by: Vec<Expr>,
-    pub having: Option<Expr>
-}
-
-impl fmt::Display for Select {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

@@ -52,14 +52,12 @@ pub enum SetExpr {
 
 impl fmt::Display for SetExpr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use SetExpr::*;
-
         match self {
-            Select(s) => write!(f, "{}", s)?,
-            Query(q) => write!(f, "{}", q)?,
-            Values(v) => write!(f, "{}", v)?,
-            Insert(v) => write!(f, "{}", v)?,
-            SetOperation {
+            SetExpr::Select(s) => write!(f, "{}", s)?,
+            SetExpr::Query(q) => write!(f, "{}", q)?,
+            SetExpr::Values(v) => write!(f, "{}", v)?,
+            SetExpr::Insert(v) => write!(f, "{}", v)?,
+            SetExpr::SetOperation {
                 op,
                 all,
                 left,
@@ -474,4 +472,4 @@ impl fmt::Display for TableWithJoins {
 
         Ok(())
     }
-i}
+}
