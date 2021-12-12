@@ -1,9 +1,43 @@
 use crate::ast::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct OrderByExpr {
+    pub expr: Expr,
+    pub asc: Option<bool>,
+    pub nulls_first: Option<bool>
+}
+
+impl fmt::Display for OrderByExpr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.expr)?;
+        match self.asc {
+            Some(true) => write!(f, " ASC")?,
+            Some(false) => write!(f, " DESC")?,
+            None => (),
+        }
+        match self.nulls_first {
+            Some(true) => write!(f, " NULLS FIRST")?,
+            Some(false) => write!(f, " NULLS LAST")?,
+            None => (),
+        }
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Offset {
+    pub value: Expr,
+    pub rows: OffsetRows,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Query {
     pub with: Option<With>,
     pub body: SetExpr,
+    pub order_by: Vec<OrderByExpr>,
+    pub limit: Option<Expr>,
+    pub offset: Option<Offset>,
+    pub fetch: Option<Fetch>
 }
 
 impl fmt::Display for Query {
