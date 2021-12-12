@@ -2,6 +2,7 @@ use super::{display_comma_separated, DataType, Ident, ObjectName, Expr};
 use std::fmt;
 
 /////////////////////////////
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum AlterTableOperation {
     AddConstraint(TableConstraint),
     AddColumn {
@@ -116,6 +117,7 @@ impl fmt::Display for AlterTableOperation {
 }
 
 /////////////////////////////
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum TableConstraint {
     Unique {
         name: Option<Ident>,
@@ -178,6 +180,7 @@ impl fmt::Display for TableConstraint {
 }
 
 // column option
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ColumnOption {
     // null
     Null,
@@ -209,6 +212,7 @@ impl fmt::Display for ColumnOption {
 }
 
 /////////////////////////////
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ColumnDef {
     pub name: Ident,
     pub data_type: DataType,
@@ -243,6 +247,7 @@ fn display_constraint_name(name: &'_ Option<Ident>) -> impl fmt::Display + '_ {
 }
 
 /////////////////////////////
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ColumnOptionDef {
     pub name: Option<Ident>,
     pub option: ColumnOption

@@ -233,6 +233,7 @@ impl fmt::Display for LateralView {
 }
 
 //////////////////////////////
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct With {
     pub recursive: bool,
     pub cte_tables: Vec<Cte>
@@ -249,6 +250,7 @@ impl fmt::Display for With {
 }
 
 //////////////////////////////
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Cte {
     pub alias: TableAlias,
     pub query: Query,
@@ -267,6 +269,7 @@ impl fmt::Display for Cte {
 }
 
 //////////////////////////////
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TableAlias {
     pub name: Ident,
     pub columns: Vec<Ident>
@@ -284,6 +287,7 @@ impl fmt::Display for TableAlias {
 }
 
 //////////////////////////////
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum JoinConstraint {
     On(Expr),
     Using(Vec<Ident>),
@@ -292,6 +296,7 @@ pub enum JoinConstraint {
 }
 
 //////////////////////////////
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum JoinOperator {
     Inner(JoinConstraint),
     LeftOuter(JoinConstraint),
@@ -303,6 +308,7 @@ pub enum JoinOperator {
 }
 
 //////////////////////////////
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Join {
     pub relation: TableFactor,
     pub join_operator: JoinOperator,
@@ -385,6 +391,7 @@ impl fmt::Display for Join {
 }
 
 //////////////////////////////
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum TableFactor {
     Table {
         name: ObjectName,
@@ -458,6 +465,7 @@ impl fmt::Display for TableFactor {
 }
 
 //////////////////////////////
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TableWithJoins {
     pub relation: TableFactor,
     pub joins: Vec<Join>
