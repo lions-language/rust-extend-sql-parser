@@ -25,9 +25,51 @@ impl fmt::Display for OrderByExpr {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum OffsetRows {
+    None,
+    Row,
+    Rows,
+}
+
+impl fmt::Display for OffsetRows {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            OffsetRows::None => Ok(()),
+            OffsetRows::Row => write!(f, " ROW"),
+            OffsetRows::Rows => write!(f, " ROWS"),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Offset {
     pub value: Expr,
     pub rows: OffsetRows,
+}
+
+impl fmt::Display for Offset {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "OFFSET {} {}", self.value, self.rows)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Fetch {
+    pub with_ties: bool,
+    pub percent: bool,
+    pub quantity: Option<Expr>
+}
+
+impl fmt::Display for Fetch {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let extension = if self.with_ties { "WITH TIES" } else { "ONLY" };
+        if let Some(ref quantity) = self.quantity {
+            let percent = if self.percent { " PERCENT" } else { "" };
+            write!(f, "FETCH FIRST {}{} ROWS {}", quantity, percent, extension)
+        } else {
+            write!(f, "FETCH FIRST ROWS {}", extension)
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
