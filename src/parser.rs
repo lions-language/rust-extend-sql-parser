@@ -418,7 +418,7 @@ impl<'a> Parser<'a> {
     fn parse_cte(&mut self) -> Result<Cte, ParserError> {
         let name = self.parse_identifier()?;
 
-        let mut cte = if self.parse_keyword(&Keyword::AS) {
+        let mut cte = if self.parse_keyword(Keyword::AS) {
             self.expect_token(&Token::LParen)?;
             let query = self.parse_query()?;
             self.expect_token(&Token::RParen)?;
@@ -432,8 +432,23 @@ impl<'a> Parser<'a> {
                 from: None,
             }
         } else {
-            let columns = self.
+            let columns = self.parse_parenthesized_column_list(Optional)?;
+            self.expect_keyword(Keyword::AS)?;
+            self.expect_token(&Token::LParen)?;
+            let query = self.parse_query()?;
+            self.expect_token(&Token::RParen)?;
+            let alias = TableAlias { name, columns };
+            Cte {
+                alias,
+                query,
+                from: None,
+            }
+        };
+
+        if self.parse_keyword(Keyword::FROM) {
+            cte.from = Some(self.parse_identifier()?);
         }
+        Ok(cte)
     }
 
     pub fn parse_map_access(&mut self, expr: Expr)  -> Result<Expr, ParserError> {
