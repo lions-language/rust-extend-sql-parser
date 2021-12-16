@@ -12,7 +12,7 @@ use self::ddl::ColumnDef;
 pub(crate) use self::value::{Value};
 pub use self::operator::{UnaryOperator, BinaryOperator};
 pub use self::query::{Query, Values, Top, SelectItem, TableWithJoins, LateralView,
-                    With, Select, SetExpr, SetOperator};
+                    With, Select, SetExpr, SetOperator, Cte, TableAlias};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Ident {

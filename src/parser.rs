@@ -47,6 +47,14 @@ impl fmt::Display for ParserError {
 impl std::error::Error for ParserError {
 }
 
+#[derive(PartialEq)]
+pub enum IsOptional {
+    Optional,
+    Mandator
+}
+
+use IsOptional::*;
+
 pub struct Parser<'a> {
     tokens: Vec<Token>,
     index: usize,
