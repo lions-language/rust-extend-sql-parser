@@ -115,7 +115,7 @@ pub enum Expr {
     },
     InSubquery {
         expr: Box<Expr>,
-        subquery: Box<Expr>,
+        subquery: Box<Query>,
         negated: bool,
     },
     Between {

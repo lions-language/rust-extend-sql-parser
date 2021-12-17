@@ -459,6 +459,23 @@ impl<'a> Parser<'a> {
         Ok(cte)
     }
 
+    pub fn parse_query_body(&mut self, precedence: u8) -> Result<SetExpr, ParserError> {
+        let mut expr = if self.parse_keyword(Keyword::SELECT) {
+            SetExpr::Select(Box::new(self.parse_select()?))
+        } else if self.consume_token(&Token::LParen) {
+            let subquery = self.parse_query()?;
+            self.expect_token(&Token::RParen)?;
+            SetExpr::Query(Box::new(subquery))
+        } else if self.parse_keyword(Keyword::VALUES) {
+            SetExpr::Values(self.parse_values()?)
+        } else {
+            return self.expected(
+                "SELECT, VALUES, or a subquery in the query body",
+                self.peek_token(),
+            );
+        }
+    }
+
     pub fn parse_map_access(&mut self, expr: Expr)  -> Result<Expr, ParserError> {
         let key = self.parse_literal_string()?;
         let tok = self.consume_token(&Token::RBracket);
