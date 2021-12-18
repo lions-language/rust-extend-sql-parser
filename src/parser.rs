@@ -473,7 +473,28 @@ impl<'a> Parser<'a> {
                 "SELECT, VALUES, or a subquery in the query body",
                 self.peek_token(),
             );
+        };
+
+        loop {
+            let op = self.parse_set_operator(&self.peek_token());
+            let next_precedence = match op {
+                Some(SetOperator::Union) | Some(SetOperator::Except) => 10,
+                Some(SetOperator::Intersect) => 20,
+                None => break,
+            };
+            if precedence >= next_precedence {
+                break;
+            }
+            self.next_token();
+            expr = SetExpr::SetOperation {
+                left: Box::new(expr),
+                op: op.unwrap(),
+                all: self.parse_keyword(Keyword::ALL),
+                right: Box::new(self.parse_query_body(next_precedence)?),
+            };
         }
+
+        Ok(expr)
     }
 
     pub fn parse_map_access(&mut self, expr: Expr)  -> Result<Expr, ParserError> {
