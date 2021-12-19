@@ -497,6 +497,15 @@ impl<'a> Parser<'a> {
         Ok(expr)
     }
 
+    pub fn parse_set_operator(&mut self, token: &Token) -> Option<SetOperator> {
+        match token {
+            Token::Word(w) if w.keyword == Keyword::UNION => Some(SetOperator::Union),
+            Token::Word(w) if w.keyword == Keyword::EXCEPT => Some(SetOperator::Except),
+            Token::Word(w) if w.keyword == Keyword::INTERSECT => Some(SetOperator::Intersect),
+            _ => None,
+        }
+    }
+
     pub fn parse_map_access(&mut self, expr: Expr)  -> Result<Expr, ParserError> {
         let key = self.parse_literal_string()?;
         let tok = self.consume_token(&Token::RBracket);
