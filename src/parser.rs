@@ -423,6 +423,32 @@ impl<'a> Parser<'a> {
         }
     }
 
+    pub fn parse_order_by_expr(&mut self) -> Result<OrderByExpr, ParserError> {
+        let expr = self.parse_expr()?;
+
+        let asc = if self.parse_keyword(Keyword::ASC) {
+            Some(true)
+        } else if self.parse_keyword(Keyword::DESC) {
+            Some(false)
+        } else {
+            None
+        };
+
+        let nulls_first = if self.parse_keywords(&[Keyword::NULLS, Keyword::FIRST]) {
+            Some(true)
+        } else if self.parse_keywords(&[Keyword::NULLS, Keyword::LAST]) {
+            Some(false)
+        } else {
+            Some(false)
+        };
+
+        Ok(OrderByExpr {
+            expr,
+            asc,
+            nulls_first,
+        })
+    }
+
     fn parse_cte(&mut self) -> Result<Cte, ParserError> {
         let name = self.parse_identifier()?;
 
