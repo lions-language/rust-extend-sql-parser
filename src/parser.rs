@@ -669,6 +669,16 @@ impl<'a> Parser<'a> {
             Ok((None, None))
         }
     }
+
+    pub fn parse_values(&mut self) -> Result<Values, ParserError> {
+        let values = self.parse_comma_separated(|parser| {
+            parser.expect_token(&Token::LParen)?;
+            let exprs = parser.parse_comma_separated(Parser::parse_expr)?;
+            parser.expect_token(&Token::RParen)?;
+            Ok(exprs)
+        })?;
+        Ok(Values(values))
+    }
 }
 
 impl<'a> Parser<'a> {
