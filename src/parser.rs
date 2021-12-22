@@ -385,7 +385,7 @@ impl<'a> Parser<'a> {
             };
 
             let limit = if self.parse_keyword(Keyword::LIMIT) {
-                self.parse_limit()?;
+                self.parse_limit()?
             } else {
                 None
             };
@@ -678,6 +678,24 @@ impl<'a> Parser<'a> {
             Ok(exprs)
         })?;
         Ok(Values(values))
+    }
+
+    pub fn parse_number_value(&mut self) -> Result<Value, ParserError> {
+        match self.parse_value()? {
+            v @ Value::Number(_, _) => Ok(v),
+            _ => {
+                self.prev_token();
+                self.expected("literal number", self.peek_token())
+            }
+        }
+    }
+
+    pub fn parse_limit(&mut self) -> Result<Option<Expr>, ParserError> {
+        if self.parse_keyword(Keyword::ALL) {
+            Ok(None)
+        } else {
+            Ok(Some(Expr::Value(self.parse_number_value()?)))
+        }
     }
 }
 
