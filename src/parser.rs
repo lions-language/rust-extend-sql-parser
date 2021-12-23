@@ -697,6 +697,18 @@ impl<'a> Parser<'a> {
             Ok(Some(Expr::Value(self.parse_number_value()?)))
         }
     }
+
+    pub fn parse_offset(&mut self) -> Result<Offset, ParserError> {
+        let value = Expr::Value(self.parse_number_value()?);
+        let rows = if self.parse_keyword(Keyword::ROW) {
+            OffsetRows::Row
+        } else if self.parse_keyword(Keyword::ROWS) {
+            OffsetRows::Rows
+        } else {
+            OffsetRows::None
+        };
+        Ok(Offset { value, rows })
+    }
 }
 
 impl<'a> Parser<'a> {
