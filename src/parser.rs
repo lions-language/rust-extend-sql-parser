@@ -709,6 +709,20 @@ impl<'a> Parser<'a> {
         };
         Ok(Offset { value, rows })
     }
+
+    pub fn parse_fetch(&mut self) -> Result<Fetch, ParserError> {
+        self.expect_one_of_keywords(&[Keyword::FIRST, Keyword::NEXT])?;
+        let (quantity, percent) = if self
+            .parse_one_of_keywords(&[Keyword::ROW, Keyword::ROWS])
+            .is_some() {
+            (None, false)
+        } else {
+            let quantity = Expr::Value(self.parse_value()?);
+            let percent = self.parse_keyword(Keyword::PERCENT);
+            self.expect_one_of_keywords(&[Keyword::ROW, Keyword::ROWS])?;
+            (Some(quantity), percent)
+        };
+    }
 }
 
 impl<'a> Parser<'a> {
