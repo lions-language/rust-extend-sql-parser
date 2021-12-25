@@ -722,6 +722,18 @@ impl<'a> Parser<'a> {
             self.expect_one_of_keywords(&[Keyword::ROW, Keyword::ROWS])?;
             (Some(quantity), percent)
         };
+        let with_ties = if self.parse_keyword(Keyword::ONLY) {
+            false
+        } else if self.parse_keywords(&[Keyword::WITH, Keyword::TIES]) {
+            true
+        } else {
+            return self.expected("one of ONLY or WITH TIES", self.peek_token());
+        };
+        Ok(Fetch {
+            with_ties,
+            percent,
+            quantity,
+        })
     }
 }
 
@@ -900,6 +912,18 @@ impl<'a> Parser<'a> {
             }
         }
         true
+    }
+
+    pub fn expect_one_of_keywords(&mut self, keywords: &[Keyword]) -> Result<Keyword, ParserError> {
+        if let Some(keyword) = self.parse_one_of_keywords(keywords) {
+            Ok(keyword)
+        } else {
+            let keywords: Vec<String> = keywords.iter().map(|x| format!("{:?}", x)).collect();
+            self.expected(
+                &format!("one of {}", keywords.join(" or ")),
+                self.peek_token(),
+            )
+        }
     }
 }
 
