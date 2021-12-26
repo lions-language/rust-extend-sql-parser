@@ -189,8 +189,40 @@ impl<'a> Parser<'a> {
                     self.prev_token();
                     Ok(Expr::Value(self.parse_value()?))
                 },
+                Keyword::CASE => self.parse_case_expr(),
+                Keyword::CAST => self.parse_cast_expr(),
             }
         };
+    }
+
+    pub fn parse_case_expr(&mut self) -> Result<Expr, ParserError> {
+        let mut operand = None;
+        if !self.parse_keyword(Keyword::WHEN) {
+            operand = Some(Box::new(self.parse_expr()?));
+            self.expect_keyword(Keyword::WHEN)?
+        }
+        let mut conditions = vec![];
+        let mut results = vec![];
+        loop {
+            conditions.push(self.parse_expr()?);
+            self.expect_keyword(Keyword::THEN);
+            results.push(self.parse_expr()?);
+            if !self.parse_keyword(Keyword::WHEN) {
+                break;
+            }
+        }
+        let else_result = if self.parse_keyword(Keyword::ELSE) {
+            Some(Box::new(self.parse_expr()?))
+        } else {
+            None
+        };
+        self.expect_keyword(Keyword::END)?;
+        Ok(Expr::Case {
+            operand,
+            conditions,
+            results,
+            else_result,
+        })
     }
     
     pub fn parse_expr(&mut self) -> Result<Expr, ParserError> {
