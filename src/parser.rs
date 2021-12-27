@@ -224,6 +224,20 @@ impl<'a> Parser<'a> {
             else_result,
         })
     }
+
+    pub fn parse_cast_expr(&mut self) -> Result<Expr, ParserError> {
+        self.expect_token(&Token::LParen)?;
+        let expr = self.parse_expr()?;
+        if !self.consume_token(&Token::Comma) {
+            self.expect_keyword(Keyword::AS)?;
+        }
+        let data_type = self.parse_data_type()?;
+        self.expect_token(&Token::RParen)?;
+        Ok(Expr::Cast {
+            expr: Box::new(expr),
+            data_type,
+        })
+    }
     
     pub fn parse_expr(&mut self) -> Result<Expr, ParserError> {
         self.parse_subexpr(0)

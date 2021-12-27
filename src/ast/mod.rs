@@ -124,6 +124,16 @@ pub enum Expr {
         negated: bool,
         low: Box<Expr>,
         high: Box<Expr>,
+    },
+    Cast {
+        expr: Box<Expr>,
+        data_type: DataType,
+    },
+    Case {
+        operand: Option<Box<Expr>>,
+        conditions: Vec<Expr>,
+        results: Vec<Expr>,
+        else_result: Option<Box<Expr>>
     }
 }
 
