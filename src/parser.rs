@@ -531,6 +531,19 @@ impl<'a> Parser<'a> {
         Ok(cte)
     }
 
+    pub fn parse_parenthesized_column_list(&mut self, optional: IsOptional)
+        -> Result<Vec<Ident>, ParserError> {
+        if self.consume_token(&Token::LParen) {
+            let cols = self.parse_comma_separated(Parser::parse_identifier)?;
+            self.expect_token(&Token::RParen)?;
+            Ok(cols)
+        } else if optional == Optional {
+            Ok(vec![])
+        } else {
+            self.expected("a list of columns in parenthese", self.peek_token())
+        }
+    }
+
     pub fn parse_query_body(&mut self, precedence: u8) -> Result<SetExpr, ParserError> {
         let mut expr = if self.parse_keyword(Keyword::SELECT) {
             SetExpr::Select(Box::new(self.parse_select()?))
