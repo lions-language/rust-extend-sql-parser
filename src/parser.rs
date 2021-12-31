@@ -192,15 +192,23 @@ impl<'a> Parser<'a> {
                 Keyword::CASE => self.parse_case_expr(),
                 Keyword::CAST => self.parse_cast_expr(),
                 Keyword::TRY_CAST => self.parse_try_cast_expr(),
+                Keyword::EXISTS => self.parse_exists_expr(),
             }
         };
+    }
+    
+    pub fn parse_exists_expr(&mut self) -> Result<Expr, ParserError> {
+        self.expect_token(&Token::LParen)?;
+        let exists_node = Expr::Exists(Box::new(self.parse_query()?));
+        self.expect_token(&Token::RParen)?;
+        Ok(exists_node)
     }
 
     pub fn parse_try_cast_expr(&mut self) -> Result<Expr, ParserError> {
         self.expect_token(&Token::LParen)?;
         let expr = self.parse_expr()?;
         if !self.consume_token(&Token::Comma) {
-            self.expect_keyword(&Keyword::AS)?;
+            self.expect_keyword(Keyword::AS)?;
         }
         let data_type = self.parse_data_type()?;
         self.expect_token(&Token::RParen)?;

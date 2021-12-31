@@ -134,7 +134,12 @@ pub enum Expr {
         conditions: Vec<Expr>,
         results: Vec<Expr>,
         else_result: Option<Box<Expr>>
-    }
+    },
+    TryCast {
+        expr: Box<Expr>,
+        data_type: DataType,
+    },
+    Exists(Box<Query>)
 }
 
 impl fmt::Display for Expr {
