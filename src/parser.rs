@@ -193,8 +193,31 @@ impl<'a> Parser<'a> {
                 Keyword::CAST => self.parse_cast_expr(),
                 Keyword::TRY_CAST => self.parse_try_cast_expr(),
                 Keyword::EXISTS => self.parse_exists_expr(),
+                Keyword::EXTRACT => self.parse_extract_expr(),
+                Keyword::SUBSTRING => self.parse_substring_expr(),
+                Keyword::INTERVAL => self.parse_literal_interval(),
             }
         };
+    }
+
+    pub fn parse_substring_expr(&mut self) -> Result<Expr, ParserError> {
+        self.expect_token(&Token::LParen)?;
+        let expr = self.parse_expr()?;
+        let mut from_expr = None;
+        let mut to_expr = None;
+        if self.parse_keyword(Keyword::FROM) {
+            from_expr = Some(self.parse_expr()?);
+        }
+        if self.parse_keyword(Keyword::FOR) {
+            to_expr = Some(self.parse_expr()?);
+        }
+        self.expect_token(&Token::RParen)?;
+
+        Ok(Expr::Substring {
+            expr: Box::new(expr),
+            substring_from: from_expr.map(Box::new),
+            substring_for: to_expr.map(Box::new),
+        })
     }
     
     pub fn parse_exists_expr(&mut self) -> Result<Expr, ParserError> {
