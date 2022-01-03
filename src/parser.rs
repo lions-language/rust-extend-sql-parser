@@ -196,8 +196,25 @@ impl<'a> Parser<'a> {
                 Keyword::EXTRACT => self.parse_extract_expr(),
                 Keyword::SUBSTRING => self.parse_substring_expr(),
                 Keyword::INTERVAL => self.parse_literal_interval(),
+                Keyword::LISTAGG => self.parse_listagg_expr(),
+                Keyword::NOT => Ok(Expr::UnaryOp {
+                    op: UnaryOperator::Not,
+                    expr: Box::new(self.parse_subexpr(Self::UNARY_NOT_PREC)?),
+                }),
             }
         };
+    }
+
+    pub fn parse_extract_expr(&mut self) -> Result<Expr, ParserError> {
+        self.expect_token(&Token::LParen)?;
+        let field = self.parse_date_time_field()?;
+        self.expect_keyword(Keyword::FROM)?;
+        let expr = self.parse_expr()?;
+        self.expect_token(&Token::RParen)?;
+        Ok(Expr::Extract {
+            field,
+            expr: Box::new(expr),
+        })
     }
 
     pub fn parse_substring_expr(&mut self) -> Result<Expr, ParserError> {

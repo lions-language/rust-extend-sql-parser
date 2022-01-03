@@ -139,7 +139,16 @@ pub enum Expr {
         expr: Box<Expr>,
         data_type: DataType,
     },
-    Exists(Box<Query>)
+    Exists(Box<Query>),
+    Substring {
+        expr: Box<Expr>,
+        substring_from: Option<Box<Expr>>,
+        substring_for: Option<Box<Expr>>,
+    },
+    Extract {
+        field: DateTimeField,
+        expr: Box<Expr>,
+    },
 }
 
 impl fmt::Display for Expr {
