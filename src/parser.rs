@@ -201,6 +201,33 @@ impl<'a> Parser<'a> {
                     op: UnaryOperator::Not,
                     expr: Box::new(self.parse_subexpr(Self::UNARY_NOT_PREC)?),
                 }),
+                _ => match self.peek_token() {
+                    Token::LParen | Token::Period => {
+                        let mut id_parts: Vec<Ident> = vec![w.to_ident()];
+                        let mut ends_with_wildcard = false;
+                        while self.consume_token(&Token::Period) {
+                            match self.next_token() {
+                                Token::Word(w) => id_parts.push(w.to_ident()),
+                                Token::Mult => {
+                                    ends_with_wildcard = true;
+                                    break;
+                                },
+                                unexpected => {
+                                    return self.expected("an identifier or a '*' after '.'", unexpected);
+                                }
+                            }
+                        }
+                        if ends_with_wildcard {
+                            Ok(Expr::QualifiedWildcard(id_parts))
+                        } else if self.consume_token(&Token::LParen) {
+                            self.prev_token();
+                            self.parse_function(ObjectName(id_parts))
+                        } else {
+                            Ok(Expr::CompoundIdentifier(id_parts))
+                        }
+                    },
+                    _ => Ok(Expr::Identifier(w.to_ident())),
+                }
             }
         };
     }

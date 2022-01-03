@@ -84,6 +84,14 @@ impl fmt::Display for ObjectName {
     }
 }
 
+pub struct ListAgg {
+    pub distinct: bool,
+    pub expr: Box<Expr>,
+    pub separator: Option<Box<Expr>>,
+    pub on_overflow: Option<ListAggOnOverflow>,
+    pub within_group: Vec<OrderByExpr>,
+}
+
 //////////////////////////////////
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Expr {
@@ -149,6 +157,7 @@ pub enum Expr {
         field: DateTimeField,
         expr: Box<Expr>,
     },
+    ListAgg(ListAgg),
 }
 
 impl fmt::Display for Expr {
