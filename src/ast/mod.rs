@@ -84,12 +84,35 @@ impl fmt::Display for ObjectName {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ListAgg {
     pub distinct: bool,
     pub expr: Box<Expr>,
     pub separator: Option<Box<Expr>>,
     pub on_overflow: Option<ListAggOnOverflow>,
     pub within_group: Vec<OrderByExpr>,
+}
+
+impl fmt::Display for ListAgg {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f,
+               "LISTAGG({}{}",
+               if self.distinct { "DISTINCT" } else { "" },
+               self.expr)?;
+        if let Some(separator) = &self.separator {
+            write!(f, ", {}", separator)?;
+        }
+        if let Some(on_overflow) = &self.on_overflow {
+            write!(f, "{}", on_overflow)?;
+        }
+        write!(f, ")")?;
+        if !self.within_group.is_empty() {
+            write!(f,
+                   " WITHIN GROUP (ORDER BY {})",
+                   display_comma_separated(&self.within_group))?;
+        }
+        Ok(())
+    }
 }
 
 //////////////////////////////////
